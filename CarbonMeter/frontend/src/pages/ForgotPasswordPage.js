@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../api';
+import './ForgotPasswordPage.css';
 
 /**
  * CARBOMETER FORGOT PASSWORD FLOW
@@ -43,7 +44,6 @@ const ForgotPasswordPage = () => {
   
   // OTP timer for resend functionality
   const [otpTimer, setOtpTimer] = useState(300); // 5 minutes
-  const [canResendOtp, setCanResendOtp] = useState(false);
 
   // =========================================================================
   // STEP 1: REQUEST PASSWORD RESET OTP
@@ -183,9 +183,9 @@ const ForgotPasswordPage = () => {
       console.log('✅ Password reset successfully:', response.data);
       setSuccessMessage('🎉 ' + response.data.message);
       
-      // Redirect to login page after short delay
+      // Redirect to auth page after short delay
       setTimeout(() => {
-        navigate('/login');
+        navigate('/auth');
       }, 1500);
 
     } catch (err) {
@@ -200,13 +200,26 @@ const ForgotPasswordPage = () => {
   // OTP TIMER & RESEND FUNCTIONALITY
   // =========================================================================
   
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+
   const startOtpTimer = () => {
-    setCanResendOtp(false);
+    setResendCountdown(30); // 30-second countdown for resend button
     const timer = setInterval(() => {
       setOtpTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setCanResendOtp(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    // Countdown timer for resend button (30 seconds)
+    const resendTimer = setInterval(() => {
+      setResendCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(resendTimer);
           return 0;
         }
         return prev - 1;
@@ -215,26 +228,64 @@ const ForgotPasswordPage = () => {
   };
 
   const handleResendOtp = async () => {
-    setLoading(true);
+    console.log('🔄 [Resend OTP] Button clicked');
+    console.log('📧 [Resend OTP] Email state:', email);
+    console.log('🎯 [Resend OTP] Purpose: password-reset');
+    
+    setIsResending(true);
     setOtpError('');
     setError('');
 
     try {
-      const response = await authAPI.forgotPassword({
+      // Validate email before sending
+      if (!email || !email.trim()) {
+        console.error('❌ [Resend OTP] Email is empty!');
+        throw new Error('Email is missing. Please go back and try again.');
+      }
+
+      console.log('🚀 [Resend OTP] Sending API request to /auth/resend-otp');
+      console.log('📤 [Resend OTP] Request payload:', { email, purpose: 'password-reset' });
+      
+      // Use the new resend-otp endpoint
+      const response = await authAPI.resendOtp({
         email,
+        purpose: 'password-reset',
       });
 
-      console.log('✅ Password reset OTP resent:', response.data);
+      console.log('✅ [Resend OTP] API Response:', response.data);
+      console.log('📨 [Resend OTP] Resend count:', response.data.resendCount);
+      console.log('📨 [Resend OTP] Max attempts:', response.data.maxResendAttempts);
+      
       setSuccessMessage('✅ OTP resent! Check your email');
       setOtp('');
-      setOtpTimer(300);
-      startOtpTimer();
+      setResendCountdown(30); // Reset 30-second countdown
+      
+      console.log('⏳ [Resend OTP] Starting 30-second countdown');
+      
+      // Restart timer for resend button
+      const resendTimer = setInterval(() => {
+        setResendCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(resendTimer);
+            console.log('✅ [Resend OTP] Countdown finished, button enabled');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
 
     } catch (err) {
-      console.error('Resend OTP error:', err);
-      setOtpError(err.response?.data?.message || 'Failed to resend OTP');
+      console.error('❌ [Resend OTP] Error occurred:', err.message);
+      console.error('🔍 [Resend OTP] Error response:', err.response?.data);
+      console.error('📊 [Resend OTP] Error status:', err.response?.status);
+      console.error('📋 [Resend OTP] Full error:', err);
+      
+      const errorMsg = err.response?.data?.message || err.message || 'Failed to resend OTP';
+      console.log('⚠️ [Resend OTP] Setting error message:', errorMsg);
+      setOtpError(errorMsg);
+      setError(errorMsg);
     } finally {
-      setLoading(false);
+      setIsResending(false);
     }
   };
 
@@ -403,22 +454,22 @@ const ForgotPasswordPage = () => {
 
                 {/* Timer & Resend */}
                 <div className="mb-6 text-center bg-soft-beige bg-opacity-50 px-4 py-3 rounded">
-                  <p className="text-sm text-gray-700 mb-2">
+                  <p className="text-sm text-gray-700 mb-3">
                     ⏱️ OTP expires in: <span className="font-bold text-dark-green text-lg">{formatTimer(otpTimer)}</span>
                   </p>
-                  {canResendOtp ? (
+                  {resendCountdown > 0 ? (
+                    <p className="text-sm text-gray-600">
+                      🔄 Resend OTP in {resendCountdown}s
+                    </p>
+                  ) : (
                     <button
                       type="button"
                       onClick={handleResendOtp}
-                      disabled={loading}
-                      className="text-sm text-dark-green hover:underline font-semibold disabled:opacity-50"
+                      disabled={isResending}
+                      className="bg-dark-green text-off-white px-4 py-2 rounded font-semibold text-sm hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed w-full"
                     >
-                      🔄 Resend OTP
+                      {isResending ? '⏳ Sending OTP...' : '🔄 Resend OTP'}
                     </button>
-                  ) : (
-                    <p className="text-xs text-gray-600">
-                      Didn't receive the code? Wait for timer or click Resend
-                    </p>
                   )}
                 </div>
 

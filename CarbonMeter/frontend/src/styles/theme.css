@@ -1,0 +1,330 @@
+/* 🎨 CARBONMETER PREMIUM CLIMATE-TECH COLOR THEME */
+/* Global CSS Variables for consistent theming across all components */
+
+:root {
+  /* ==================== BACKGROUND COLORS ==================== */
+  --bg-primary: #0F1F17;           /* Dark forest green - main background */
+  --bg-secondary: #121212;          /* Soft black - secondary sections */
+  --bg-card: #16261E;               /* Card background */
+  --bg-navbar: #0C1A14;             /* Navbar background */
+  --bg-light: #1A2F27;              /* Light variant for hover states */
+  --bg-gradient: linear-gradient(135deg, #0F1F17 0%, #16261E 100%);
+  --bg-gradient-yellow: linear-gradient(135deg, #0F1F17 0%, #FACC15 100%);
+  --bg-accent-light: #f9fdf7;       /* Very light for sections */
+
+  /* ==================== TEXT COLORS ==================== */
+  --text-primary: #FFFFFF;          /* Pure white - headings, titles */
+  --text-secondary: #E5E7EB;        /* Soft white - normal text, paragraphs */
+  --text-muted: #9CA3AF;            /* Gray - secondary info, labels */
+  --text-disabled: #6B7280;         /* Dark gray - disabled state */
+
+  /* ==================== ACCENT COLORS ==================== */
+  --accent-yellow: #FACC15;         /* Primary yellow - highlights, buttons */
+  --accent-yellow-light: #FFD84D;   /* Lighter yellow - hover states */
+  --accent-yellow-subtle: #FEF08A;  /* Very light yellow - backgrounds */
+
+  /* ==================== STATUS COLORS ==================== */
+  --success: #22C55E;               /* Green - success states */
+  --success-dark: #16A34A;          /* Dark green - hover */
+  --warning: #EAB308;               /* Yellow warning */
+  --error: #EF4444;                 /* Red - errors */
+  --info: #3B82F6;                  /* Blue - information */
+
+  /* ==================== SHADOWS ==================== */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.2);
+
+  /* ==================== TRANSITIONS ==================== */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+/* ==================== GLOBAL STYLES ==================== */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==================== HEADING STYLES ==================== */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 28px;
+  font-weight: 600;
+}
+
+h4 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* ==================== PARAGRAPH STYLES ==================== */
+p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ==================== BUTTON STYLES ==================== */
+.btn-primary {
+  background-color: var(--accent-yellow);
+  color: var(--bg-primary);
+  font-weight: 600;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-yellow-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--accent-yellow);
+  border: 2px solid var(--accent-yellow);
+  padding: 10px 26px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(250, 204, 21, 0.1);
+  color: var(--accent-yellow-light);
+  border-color: var(--accent-yellow-light);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: none;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.btn-ghost:hover {
+  color: var(--accent-yellow);
+  transform: translateX(4px);
+}
+
+/* ==================== LINK STYLES ==================== */
+a {
+  color: var(--accent-yellow);
+  text-decoration: none;
+  transition: color var(--transition-normal);
+}
+
+a:hover {
+  color: var(--accent-yellow-light);
+  text-decoration: underline;
+}
+
+/* ==================== INPUT STYLES ==================== */
+input, textarea, select {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--text-muted);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all var(--transition-normal);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-yellow);
+  box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.1);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ==================== CARD STYLES ==================== */
+.card {
+  background-color: var(--bg-card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ==================== BADGE STYLES ==================== */
+.badge {
+  display: inline-block;
+  background-color: var(--bg-light);
+  color: var(--text-secondary);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-primary {
+  background-color: var(--accent-yellow);
+  color: var(--bg-primary);
+}
+
+.badge-success {
+  background-color: var(--success);
+  color: white;
+}
+
+.badge-error {
+  background-color: var(--error);
+  color: white;
+}
+
+/* ==================== UTILITY CLASSES ==================== */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-accent {
+  color: var(--accent-yellow);
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-error {
+  color: var(--error);
+}
+
+.bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.bg-card {
+  background-color: var(--bg-card);
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ==================== RESPONSIVE ADJUSTMENTS ==================== */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 36px;
+  }
+
+  h2 {
+    font-size: 28px;
+  }
+
+  h3 {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
+}

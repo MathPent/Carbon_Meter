@@ -1,10 +1,11 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { authAPI, setAuthToken } from '../api';
+import { authAPI } from '../api';
 import { AuthContext } from '../context/AuthContext';
+import './LoginPage.css';
 
-const LoginPage = () => {
+const LoginPage = ({ onSwitchToRegister }) => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
@@ -28,10 +29,13 @@ const LoginPage = () => {
 
     try {
       const response = await authAPI.login(formData);
+      console.log('✅ [LoginPage] Login successful:', response.data.user.email);
       login(response.data.user, response.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      const errorMsg = err.response?.data?.message || 'Login failed';
+      console.error('❌ [LoginPage] Login error:', errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -42,11 +46,13 @@ const LoginPage = () => {
     setError('');
     try {
       const response = await authAPI.googleLogin(credentialResponse.credential);
-      setAuthToken(response.data.token);
+      console.log('✅ [LoginPage] Google login successful');
       login(response.data.user, response.data.token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Google login failed');
+      const errorMsg = err.response?.data?.message || 'Google login failed';
+      console.error('❌ [LoginPage] Google login error:', errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -81,7 +87,7 @@ const LoginPage = () => {
               <input
                 type="email"
                 name="email"
-                placeholder="Email or Mobile"
+                placeholder="Enter Your Email"
                 value={formData.email}
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 mb-4 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
@@ -136,7 +142,7 @@ const LoginPage = () => {
             <div className="text-center mt-6">
               <span className="text-gray-600">Don't have an account? </span>
               <button
-                onClick={() => navigate('/register')}
+                onClick={onSwitchToRegister}
                 className="font-semibold text-dark-green hover:underline"
               >
                 REGISTER YOURSELF

@@ -736,4 +736,132 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// =============================================================================
+// RESEND OTP ENDPOINT (Works for both registration and password reset)
+// =============================================================================
+/**
+ * POST /auth/resend-otp
+ * 
+ * Purpose: Resend OTP to user's email
+ * Input: { email, purpose } (purpose: 'registration' or 'password-reset')
+ * Logic:
+ *   - Check if OTP exists for email
+ *   - Limit resend attempts (max 5 per session)
+ *   - Generate new OTP
+ *   - Replace old OTP with new one
+ *   - Send new OTP email
+ * Response: "OTP resent successfully"
+ */
+router.post('/resend-otp', async (req, res) => {
+  console.log('\n═══════════════════════════════════════════════════════════');
+  console.log('🔄 [RESEND-OTP ENDPOINT HIT]');
+  console.log('═══════════════════════════════════════════════════════════');
+  console.log('Request body:', JSON.stringify(req.body, null, 2));
+  
+  try {
+    const { email, purpose = 'registration' } = req.body;
+
+    console.log(`\n📨 Resend OTP request for: ${email}, Purpose: ${purpose}`);
+
+    // ========== VALIDATION ==========
+    if (!email) {
+      console.log('❌ Email is empty');
+      return res.status(400).json({ 
+        message: 'Email is required' 
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      console.log(`❌ Invalid email format: ${email}`);
+      return res.status(400).json({ 
+        message: 'Please enter a valid email address' 
+      });
+    }
+
+    // ========== CHECK IF OTP EXISTS ==========
+    console.log(`🔍 Checking for existing OTP for: ${email.toLowerCase()}`);
+    const existingOtp = await Otp.findOne({ email: email.toLowerCase() });
+
+    if (!existingOtp) {
+      console.log(`❌ No OTP found for ${email}. User needs to request a fresh OTP.`);
+      return res.status(400).json({
+        message: 'No OTP request found for this email. Please request a new OTP first.',
+        code: 'NO_OTP_FOUND',
+        requiresFreshOtp: true
+      });
+    }
+
+    console.log(`✅ Found existing OTP. Current resend count: ${existingOtp.resendCount}`);
+
+    // ========== CHECK RESEND LIMIT ==========
+    const maxResendAttempts = 5;
+    if (existingOtp.resendCount >= maxResendAttempts) {
+      console.log(`❌ Resend limit exceeded for ${email}`);
+      return res.status(429).json({
+        message: `Maximum resend attempts (${maxResendAttempts}) exceeded. Please request a new OTP.`,
+        code: 'RESEND_LIMIT_EXCEEDED',
+        retryAfter: 300,
+        requiresFreshOtp: true
+      });
+    }
+
+    // ========== GENERATE NEW OTP ==========
+    const newOtp = generateOtp();
+    console.log(`🔄 Resending OTP for ${email}: ${newOtp}`);
+
+    // ========== UPDATE OTP IN DATABASE ==========
+    existingOtp.otp = newOtp;
+    existingOtp.resendCount += 1;
+    existingOtp.lastResendTime = new Date();
+    existingOtp.createdAt = new Date(); // Reset expiry timer
+    await existingOtp.save();
+    console.log(`✅ OTP updated (resend count: ${existingOtp.resendCount})`);
+
+    // ========== SEND NEW OTP EMAIL ==========
+    try {
+      const emailPurpose = purpose === 'password-reset' ? 'Password Reset' : 'Registration';
+      console.log(`🚀 Sending email to ${email} with purpose: ${emailPurpose}`);
+      console.log(`📧 Email config: USER=${process.env.EMAIL}, PASS=${process.env.EMAIL_PASS ? '***' : 'NOT SET'}`);
+      
+      await sendOtpEmail(email, newOtp, emailPurpose);
+      console.log(`✅ Email sent successfully to ${email}`);
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError);
+      console.error('Error message:', emailError.message);
+      console.error('Error stack:', emailError.stack);
+      
+      return res.status(500).json({
+        message: 'Failed to resend OTP email. Please try again.',
+        error: emailError.message
+      });
+    }
+
+    // ========== SUCCESS RESPONSE ==========
+    console.log('\n✅ [RESEND-OTP SUCCESS]');
+    console.log(`   Email: ${email.toLowerCase()}`);
+    console.log(`   Resend count: ${existingOtp.resendCount}/${maxResendAttempts}`);
+    console.log('═══════════════════════════════════════════════════════════\n');
+    
+    res.status(200).json({
+      message: 'OTP resent successfully! Check your email.',
+      email: email.toLowerCase(),
+      expiresIn: '5 minutes',
+      resendCount: existingOtp.resendCount,
+      maxResendAttempts: maxResendAttempts
+    });
+
+  } catch (error) {
+    console.error('\n❌ [RESEND-OTP ERROR]');
+    console.error('Error details:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('═══════════════════════════════════════════════════════════\n');
+    
+    res.status(500).json({ 
+      message: 'Failed to resend OTP', 
+      error: error.message 
+    });
+  }
+});
+
 module.exports = router;

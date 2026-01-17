@@ -1,28 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import './DashboardPage.css';
 
 const DashboardPage = () => {
+  const { user } = useContext(AuthContext);
+
   return (
     <div className="min-h-screen bg-neutral-bg">
-      {/* Navbar */}
-      <nav className="bg-dark-green text-off-white p-4 shadow">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">CarbonMeter</h1>
-          <ul className="flex gap-6">
-            <li><a href="/dashboard" className="hover:text-gold">Dashboard</a></li>
-            <li><a href="/log-activity" className="hover:text-gold">Log Activity</a></li>
-            <li><a href="/community" className="hover:text-gold">Community</a></li>
-            <li><a href="/carbon-map" className="hover:text-gold">Carbon Map</a></li>
-            <li><a href="/tips" className="hover:text-gold">Tips</a></li>
-          </ul>
-          <div className="flex gap-4">
-            <select className="px-2 py-1 bg-dark-green text-off-white border border-off-white rounded">
-              <option>English</option>
-            </select>
-            <button className="px-4 py-1 bg-light-green text-dark-green rounded">Logout</button>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-dark-green to-light-green text-off-white p-8 text-center">
         <h2 className="text-4xl font-bold mb-4">

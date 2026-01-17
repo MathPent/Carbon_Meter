@@ -18,6 +18,15 @@ const generateOtp = () => {
  */
 const sendOtpEmail = async (email, otp, purpose = 'Registration') => {
   try {
+    console.log(`\n📧 [sendOtpEmail] Starting email send for: ${email}, Purpose: ${purpose}`);
+    
+    if (!process.env.EMAIL || !process.env.EMAIL_PASS) {
+      console.error('❌ [sendOtpEmail] Missing EMAIL or EMAIL_PASS in environment variables');
+      throw new Error('Email service not configured. Check .env file for EMAIL and EMAIL_PASS');
+    }
+    
+    console.log(`📧 [sendOtpEmail] Using email: ${process.env.EMAIL}`);
+    
     // Create Nodemailer transporter using Gmail
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -26,6 +35,16 @@ const sendOtpEmail = async (email, otp, purpose = 'Registration') => {
         pass: process.env.EMAIL_PASS, // Gmail App Password (generate from Google Account)
       },
     });
+
+    console.log(`✅ [sendOtpEmail] Transporter created successfully`);
+    
+    // Verify transporter connection (async version with promises)
+    try {
+      await transporter.verify();
+      console.log('✅ [sendOtpEmail] SMTP connection verified');
+    } catch (verifyError) {
+      console.error('⚠️ [sendOtpEmail] SMTP connection warning (may still work):', verifyError.message);
+    }
 
     // Generate dynamic subject and content based on purpose
     let subject, mainMessage, warning;
@@ -192,8 +211,12 @@ const sendOtpEmail = async (email, otp, purpose = 'Registration') => {
     console.log(`✅ ${purpose} OTP sent successfully to ${email}`);
     return true;
   } catch (error) {
-    console.error('❌ Error sending OTP email:', error.message);
-    throw new Error('Failed to send OTP email. Please try again later.');
+    console.error('❌ Error sending OTP email:', error);
+    console.error('Error type:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response);
+    console.error('Full error:', JSON.stringify(error, null, 2));
+    throw new Error(`Failed to send OTP email: ${error.message}`);
   }
 };
 

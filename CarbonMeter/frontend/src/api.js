@@ -23,6 +23,9 @@ export const authAPI = {
   // Step 3: Reset password with new password
   resetPassword: (data) => axios.post(`${API_URL}/auth/reset-password`, data),
   
+  // ========== RESEND OTP ENDPOINT (Works for both flows) ==========
+  resendOtp: (data) => axios.post(`${API_URL}/auth/resend-otp`, data),
+  
   // ========== LEGACY METHODS (BACKWARD COMPATIBLE) ==========
   register: (data) => axios.post(`${API_URL}/auth/register`, data),
   login: (data) => axios.post(`${API_URL}/auth/login`, data),
