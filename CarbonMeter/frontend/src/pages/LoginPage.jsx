@@ -59,19 +59,9 @@ const LoginPage = ({ onSwitchToRegister }) => {
   };
 
   return (
-    <div>
-      <div className="min-h-screen bg-neutral-bg flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 bg-dark-green text-off-white shadow">
-          <h1 className="text-2xl font-bold">CarbonMeter</h1>
-          <select className="px-4 py-2 bg-dark-green text-off-white border border-off-white rounded">
-            <option>English</option>
-            <option>Spanish</option>
-          </select>
-        </div>
-
-        {/* Login Form */}
-        <div className="flex-1 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-neutral-bg flex flex-col">
+      {/* Login Form */}
+      <div className="flex-1 flex items-center justify-center px-4">
           <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
             <h2 className="text-2xl font-bold text-dark-green mb-6 text-center">
               Welcome Back
@@ -151,7 +141,6 @@ const LoginPage = ({ onSwitchToRegister }) => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
