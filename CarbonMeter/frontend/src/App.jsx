@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
+import DiscoverPage from './pages/DiscoverPage';
 
 // Protected Route Component
 function ProtectedRoute({ element }) {
@@ -51,6 +52,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/discover" element={<DiscoverPage />} />
 
         {/* Protected Routes */}
         <Route 
