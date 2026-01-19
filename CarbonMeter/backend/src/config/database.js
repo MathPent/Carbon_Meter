@@ -1,55 +1,58 @@
 const mongoose = require('mongoose');
 
 /**
- * MongoDB Atlas Connection Module
- * Centralized database connection using environment variables
- * Validates required credentials at startup
- * Uses async/await for proper error handling
+ * MongoDB Connection Module with Atlas + Local Fallback
+ * Tries Atlas first, falls back to local MongoDB if Atlas fails
+ * Provides detailed connection diagnostics
  */
 
 const connectDB = async () => {
-  // Validate MongoDB URI is configured
-  if (!process.env.MONGODB_URI) {
-    const errorMsg = [
-      '❌ MONGODB_URI is not defined',
-      'Please add to your .env file:',
-      'MONGODB_URI=mongodb+srv://<username>:<password>@carbonmeter-cluster.cjgdnje.mongodb.net/carbonmeter',
-      '',
-      'Do NOT hardcode credentials. Use MongoDB Atlas credentials only.'
-    ].join('\n');
-    console.error(errorMsg);
-    process.exit(1);
+  const atlasUri = process.env.MONGODB_URI;
+  const localUri = process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/carbonmeter';
+
+  // Connection options
+  const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    maxPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+  };
+
+  // Try Atlas first
+  if (atlasUri) {
+    console.log('🔄 Attempting MongoDB Atlas connection...');
+    try {
+      const conn = await mongoose.connect(atlasUri, options);
+      console.log('✅ MongoDB Atlas connected successfully');
+      console.log(`   Host: ${conn.connection.host}`);
+      console.log(`   Database: ${conn.connection.name}`);
+      return conn;
+    } catch (error) {
+      console.log('⚠️ Atlas connection failed, trying local MongoDB...');
+      console.log(`   Atlas Error: ${error.message}`);
+    }
   }
 
+  // Fallback to local MongoDB
   try {
-    // Connect to MongoDB Atlas
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      maxPoolSize: 10, // Connection pooling for production
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-
-    console.log('✅ MongoDB Atlas connected successfully');
-    console.log(`   Cluster: ${conn.connection.host}`);
+    console.log('🔄 Connecting to local MongoDB...');
+    const conn = await mongoose.connect(localUri, options);
+    console.log('✅ Local MongoDB connected successfully');
+    console.log(`   Host: ${conn.connection.host}`);
     console.log(`   Database: ${conn.connection.name}`);
-    
+    console.log('💡 Consider fixing Atlas connection for production use');
     return conn;
   } catch (error) {
-    console.error('❌ MongoDB Atlas connection failed');
-    console.error(`   Error: ${error.message}`);
-    console.error('   Possible causes:');
-    console.error('   - Invalid connection string in MONGODB_URI');
-    console.error('   - Network access not configured in MongoDB Atlas');
-    console.error('   - Database user credentials incorrect');
-    console.error('   - Atlas cluster not running');
+    console.error('❌ Both Atlas and local MongoDB connections failed');
+    console.error(`   Local Error: ${error.message}`);
+    console.error('🔧 Solutions:');
+    console.error('   - Start local MongoDB: mongod --dbpath /path/to/data');
+    console.error('   - Fix Atlas network/credentials');
+    console.error('   - Check .env file configuration');
     
-    // Don't exit immediately - allow graceful startup for debugging
-    // Production deployments should handle this via monitoring
-    console.error('   Retrying connection in 5 seconds...');
-    
-    setTimeout(() => connectDB(), 5000);
+    // Return null to allow server to start without DB (for debugging)
+    return null;
   }
 };
 
@@ -61,5 +64,11 @@ mongoose.connection.on('disconnected', () => {
 mongoose.connection.on('reconnected', () => {
   console.log('✅ MongoDB reconnected');
 });
+
+mongoose.connection.on('error', (error) => {
+  console.error('📡 MongoDB connection error:', error.message);
+});
+
+module.exports = connectDB;
 
 module.exports = connectDB;

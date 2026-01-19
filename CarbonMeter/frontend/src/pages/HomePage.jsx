@@ -1,11 +1,20 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import GlobalEmissionsChart from '../components/home/GlobalEmissionsChart';
+import IndiaStats from '../components/home/IndiaStats';
+import CO2Concentration from '../components/home/CO2Concentration';
+import WhyItMatters from '../components/home/WhyItMatters';
+import QuoteCarousel from '../components/home/QuoteCarousel';
+import VisualStorytelling from '../components/home/VisualStorytelling';
+import InteractiveGraph from '../components/home/InteractiveGraph';
+import CTASection from '../components/home/CTASection';
+import DataSources from '../components/home/DataSources';
 import './HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useContext(AuthContext);
+  const { isAuthenticated } = useContext(AuthContext);
 
   return (
     <div className="home-page">
@@ -126,19 +135,20 @@ const HomePage = () => {
         </section>
       )}
 
-      {/* CTA Section */}
-      {!isAuthenticated && (
-        <section className="cta-section">
-          <h2>Ready to Make a Difference?</h2>
-          <p>Join thousands of users already tracking their carbon footprint</p>
-          <button
-            className="cta-button"
-            onClick={() => navigate('/auth')}
-          >
-            Sign Up for Free
-          </button>
-        </section>
-      )}
+      {/* New Premium Sections */}
+      <GlobalEmissionsChart />
+      <IndiaStats />
+      <CO2Concentration />
+      <WhyItMatters />
+      <QuoteCarousel />
+      <VisualStorytelling />
+      <InteractiveGraph />
+      
+      {/* CTA Section - only show if not authenticated */}
+      {!isAuthenticated && <CTASection />}
+      
+      {/* Data Sources Footer */}
+      <DataSources />
 
       {/* Footer */}
       <footer className="footer">
