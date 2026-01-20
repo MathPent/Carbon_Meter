@@ -395,7 +395,7 @@ const RegisterPage = ({ onSwitchToLogin }) => {
                     Who are you? *
                   </label>
                   <div className="grid grid-cols-3 gap-2">
-                    {['Individual', 'Industry', 'Government'].map((role) => (
+                    {['Individual', 'Non-Governmental Organization', 'Government Sector'].map((role) => (
                       <button
                         key={role}
                         type="button"
@@ -418,7 +418,7 @@ const RegisterPage = ({ onSwitchToLogin }) => {
                   disabled={loading}
                   className="w-full bg-dark-green text-off-white py-2 rounded font-semibold hover:bg-opacity-90 disabled:opacity-50 transition"
                 >
-                  {loading ? '⏳ Sending OTP...' : '📧 Send OTP to Email'}
+                  {loading ? '⏳ Sending OTP...' : 'Submit'}
                 </button>
               </form>
 

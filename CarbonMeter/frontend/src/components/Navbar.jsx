@@ -31,12 +31,12 @@ const Navbar = () => {
           <Link to="/dashboard" className="navbar-link">
             Dashboard
           </Link>
-          <a href="#log-activity" className="navbar-link">
+          <Link to="/log-activity" className="navbar-link">
             Log Activity
-          </a>
-          <a href="#community" className="navbar-link">
-            Community
-          </a>
+          </Link>
+          <Link to="/leaderboard" className="navbar-link">
+            Leaderboard
+          </Link>
           <a href="#carbon-map" className="navbar-link">
             Carbon Map
           </a>

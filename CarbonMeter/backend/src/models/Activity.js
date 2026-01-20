@@ -8,15 +8,56 @@ const activitySchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Travel', 'Electricity', 'Food', 'Waste'],
+    enum: ['Transport', 'Electricity', 'Food', 'Waste'],
     required: true,
+  },
+  logType: {
+    type: String,
+    enum: ['manual', 'quick'],
+    default: 'manual',
   },
   description: {
     type: String,
   },
   carbonEmission: {
-    type: Number, // in kg CO2
+    type: Number, // in kg CO2e
     required: true,
+  },
+  // Transport specific data
+  transportData: {
+    mode: { type: String, enum: ['road', 'air', 'rail'] },
+    vehicleType: String,
+    fuelType: String,
+    distance: Number,
+    mileage: Number,
+    fuelConsumed: Number,
+  },
+  // Electricity specific data
+  electricityData: {
+    source: { type: String, enum: ['grid', 'dg', 'renewable'] },
+    consumption: Number, // kWh
+  },
+  // Food specific data
+  foodData: {
+    type: { type: String, enum: ['animal', 'plant'] },
+    items: [{
+      name: String,
+      quantity: Number,
+      emissionFactor: Number,
+      emission: Number,
+    }],
+  },
+  // Waste specific data
+  wasteData: {
+    foodWaste: Number,
+    solidWaste: Number,
+    liquidWaste: Number,
+  },
+  formula: {
+    type: String, // Store the formula used for calculation
+  },
+  source: {
+    type: String, // Government source reference
   },
   date: {
     type: Date,
@@ -27,5 +68,9 @@ const activitySchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Index for fast queries
+activitySchema.index({ userId: 1, date: -1 });
+activitySchema.index({ userId: 1, category: 1 });
 
 module.exports = mongoose.model('Activity', activitySchema);

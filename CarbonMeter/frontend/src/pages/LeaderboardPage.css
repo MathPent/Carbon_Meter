@@ -1,0 +1,309 @@
+/* Leaderboard Page Styles */
+
+.leaderboard-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #064e3b 0%, #1e3a8a 100%);
+  padding: 2rem;
+}
+
+.leaderboard-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.leaderboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.leaderboard-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.leaderboard-subtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Period Filter */
+.period-filter {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.period-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.period-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #F59E0B;
+  transform: translateY(-2px);
+}
+
+.period-btn.active {
+  background: #F59E0B;
+  border-color: #F59E0B;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+}
+
+/* Leaderboard Table */
+.leaderboard-table {
+  background: rgba(17, 24, 39, 0.8);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 100px 1fr 150px 180px;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: #F59E0B;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 150px 180px;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  background: rgba(31, 41, 55, 0.6);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  align-items: center;
+}
+
+.table-row:hover {
+  background: rgba(31, 41, 55, 0.9);
+  border-color: rgba(245, 158, 11, 0.5);
+  transform: translateX(5px);
+}
+
+.table-row.top-rank {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.1));
+  border-color: rgba(245, 158, 11, 0.5);
+}
+
+/* Rank */
+.row-rank {
+  display: flex;
+  justify-content: center;
+}
+
+.rank-badge {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #F59E0B;
+}
+
+/* User */
+.row-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #F59E0B, #FBB82F);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  border: 3px solid rgba(245, 158, 11, 0.3);
+}
+
+.user-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* Activities */
+.row-activities {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #3B82F6;
+}
+
+/* Emissions */
+.row-emissions {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.emission-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #10B981;
+}
+
+.emission-unit {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Loading and Empty States */
+.loading {
+  text-align: center;
+  padding: 4rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.2rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  font-size: 5rem;
+  margin-bottom: 1rem;
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.1rem;
+}
+
+/* Info Box */
+.info-box {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(59, 130, 246, 0.2);
+  border: 2px solid rgba(59, 130, 246, 0.4);
+  border-radius: 12px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.info-icon {
+  font-size: 2rem;
+}
+
+.info-content h4 {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.info-content p {
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
+}
+
+.info-content strong {
+  color: #F59E0B;
+  font-weight: 700;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .leaderboard-title {
+    font-size: 2rem;
+  }
+
+  .period-filter {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .period-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .table-header,
+  .table-row {
+    grid-template-columns: 80px 1fr 100px 130px;
+    gap: 0.5rem;
+    padding: 1rem 0.75rem;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+  }
+
+  .user-name {
+    font-size: 1rem;
+  }
+
+  .emission-value {
+    font-size: 1.2rem;
+  }
+
+  .rank-badge {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaderboard-page {
+    padding: 1rem;
+  }
+
+  .table-header {
+    display: none; /* Hide header on very small screens */
+  }
+
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .row-user {
+    justify-content: center;
+  }
+
+  .row-emissions {
+    justify-content: center;
+  }
+}

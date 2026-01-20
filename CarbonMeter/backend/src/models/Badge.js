@@ -6,9 +6,8 @@ const badgeSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  badgeName: {
+  name: {
     type: String,
-    enum: ['Eco Hero', 'Green Warrior', 'Carbon Saver', 'Certified Activist'],
     required: true,
   },
   description: {
@@ -19,5 +18,8 @@ const badgeSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+// Compound index to prevent duplicate badges for same user
+badgeSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 module.exports = mongoose.model('Badge', badgeSchema);

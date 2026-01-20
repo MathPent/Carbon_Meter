@@ -1,73 +1,227 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchUserStats();
+    checkBadges();
+  }, []);
+
+  const fetchUserStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('http://localhost:5000/api/activities/user-stats', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (response.data.success) {
+        setStats(response.data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkBadges = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post('http://localhost:5000/api/badges/check-eligibility', {}, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error('Error checking badges:', error);
+    }
+  };
+
+  // Calculate trees equivalent (1 tree absorbs ~20 kg CO2/year)
+  const calculateTrees = (totalEmissions) => {
+    if (!totalEmissions) return 0;
+    return Math.ceil(totalEmissions / 20);
+  };
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-dark-green to-light-green text-off-white p-8 text-center">
-        <h2 className="text-4xl font-bold mb-4">
-          "Every ton of carbon saved is a step toward a sustainable future."
-        </h2>
-        <p className="text-xl">Join thousands of climate-conscious individuals making a difference</p>
+    <div className="individual-dashboard">
+      {/* Welcome Section */}
+      <div className="dashboard-welcome">
+        <div className="welcome-content">
+          <h1 className="welcome-title">Welcome back, {user?.name || 'User'}!</h1>
+          <p className="welcome-subtitle">Track your carbon footprint and make a difference today</p>
+        </div>
       </div>
 
-      {/* Dashboard Stats */}
-      <div className="max-w-6xl mx-auto py-12 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Total Carbon Footprint */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-gray-600 text-sm font-semibold">Total Carbon Footprint</h3>
-            <p className="text-3xl font-bold text-dark-green mt-2">12.5 tons</p>
-            <p className="text-xs text-gray-500 mt-1">This year</p>
-          </div>
+      {/* Quick Actions */}
+      <div className="dashboard-container">
+        <div className="quick-actions-section">
+          <h2 className="section-title">Quick Actions</h2>
+          <div className="actions-grid">
+            <button 
+              className="action-card"
+              onClick={() => navigate('/log-activity')}
+            >
+              <div className="action-icon">📊</div>
+              <h3>Log Activity</h3>
+              <p>Record your daily carbon emissions</p>
+            </button>
 
-          {/* Carbon Saved */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-gray-600 text-sm font-semibold">Carbon Saved</h3>
-            <p className="text-3xl font-bold text-light-green mt-2">3.2 tons</p>
-            <p className="text-xs text-gray-500 mt-1">This year</p>
-          </div>
+            <button 
+              className="action-card"
+              onClick={() => navigate('/calculator')}
+            >
+              <div className="action-icon">🧮</div>
+              <h3>Carbon Calculator</h3>
+              <p>Calculate your carbon footprint</p>
+            </button>
 
-          {/* Monthly Goal */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-gray-600 text-sm font-semibold">Monthly Emission Goal</h3>
-            <p className="text-3xl font-bold text-brown mt-2">0.8 tons</p>
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-              <div
-                className="bg-gold h-2 rounded-full"
-                style={{ width: '65%' }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">65% used</p>
-          </div>
+            <button 
+              className="action-card"
+              onClick={() => navigate('/history')}
+            >
+              <div className="action-icon">📈</div>
+              <h3>View History</h3>
+              <p>Track your emission trends</p>
+            </button>
 
-          {/* Community Impact */}
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-gray-600 text-sm font-semibold">Community Saved</h3>
-            <p className="text-3xl font-bold text-light-blue mt-2">245 tons</p>
-            <p className="text-xs text-gray-500 mt-1">Global community</p>
+            <button 
+              className="action-card"
+              onClick={() => navigate('/badges')}
+            >
+              <div className="action-icon">🏆</div>
+              <h3>My Badges</h3>
+              <p>View your achievements</p>
+            </button>
           </div>
         </div>
 
-        {/* Badges Section */}
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-xl font-bold text-dark-green mb-4">Your Badges</h3>
-          <div className="flex gap-4 flex-wrap">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gold rounded-full flex items-center justify-center mx-auto mb-2">
-                🏆
+        {/* Personal Stats */}
+        <div className="personal-stats-section">
+          <h2 className="section-title">Your Carbon Journey</h2>
+          {loading ? (
+            <div className="stats-loading">Loading your stats...</div>
+          ) : (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-icon">🌱</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Activities Logged</p>
+                    <h3 className="stat-value">{stats?.totalActivities || 0}</h3>
+                    <p className="stat-hint">
+                      {stats?.totalActivities > 0 
+                        ? 'Keep it up!' 
+                        : 'Start logging to see your data'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon">📅</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Today's Emissions</p>
+                    <h3 className="stat-value">{stats?.dailyEmissions || 0} kg</h3>
+                    <p className="stat-hint">CO2e emitted today</p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon">⚡</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Monthly Emissions</p>
+                    <h3 className="stat-value">{stats?.monthlyEmissions || 0} kg</h3>
+                    <p className="stat-hint">This month's total</p>
+                  </div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-icon">🌳</div>
+                  <div className="stat-content">
+                    <p className="stat-label">Trees to Offset</p>
+                    <h3 className="stat-value">{calculateTrees(stats?.totalEmissions)}</h3>
+                    <p className="stat-hint">Trees needed to offset total</p>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm font-semibold">Eco Hero</p>
+
+              {/* Category Breakdown */}
+              {stats && stats.totalActivities > 0 && (
+                <div className="category-breakdown">
+                  <h3 className="breakdown-title">Emissions by Category</h3>
+                  <div className="breakdown-grid">
+                    {Object.entries(stats.categoryBreakdown).map(([category, emission]) => (
+                      <div key={category} className="breakdown-item">
+                        <span className="breakdown-category">{category}</span>
+                        <span className="breakdown-value">{emission.toFixed(2)} kg CO2e</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Activities */}
+              {stats && stats.recentActivities && stats.recentActivities.length > 0 && (
+                <div className="recent-activities">
+                  <h3 className="breakdown-title">Recent Activities</h3>
+                  <div className="activity-list">
+                    {stats.recentActivities.map((activity) => (
+                      <div key={activity.id} className="activity-item">
+                        <div className="activity-info">
+                          <span className="activity-category">{activity.category}</span>
+                          <span className="activity-description">{activity.description}</span>
+                          <span className="activity-date">
+                            {new Date(activity.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="activity-emission">
+                          {activity.carbonEmission.toFixed(2)} kg CO2e
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Getting Started Guide */}
+        <div className="getting-started-section">
+          <h2 className="section-title">Getting Started</h2>
+          <div className="guide-cards">
+            <div className="guide-card">
+              <div className="guide-number">1</div>
+              <div className="guide-content">
+                <h4>Log Your First Activity</h4>
+                <p>Click "Log Activity" to start tracking your carbon emissions across transportation, energy, food, and more.</p>
+              </div>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-light-green rounded-full flex items-center justify-center mx-auto mb-2">
-                ♻️
+
+            <div className="guide-card">
+              <div className="guide-number">2</div>
+              <div className="guide-content">
+                <h4>View Your Results</h4>
+                <p>Get detailed analytics with charts showing your emission breakup and comparisons with averages.</p>
               </div>
-              <p className="text-sm font-semibold">Green Warrior</p>
+            </div>
+
+            <div className="guide-card">
+              <div className="guide-number">3</div>
+              <div className="guide-content">
+                <h4>Track Your Progress</h4>
+                <p>Monitor your trends over time and earn badges for sustainable habits.</p>
+              </div>
             </div>
           </div>
         </div>

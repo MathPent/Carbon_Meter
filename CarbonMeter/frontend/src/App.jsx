@@ -7,6 +7,9 @@ import AuthPage from './pages/AuthPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import DashboardPage from './pages/DashboardPage';
 import DiscoverPage from './pages/DiscoverPage';
+import LogActivityPage from './pages/LogActivityPage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import BadgesPage from './pages/BadgesPage';
 
 // Protected Route Component
 function ProtectedRoute({ element }) {
@@ -26,6 +29,26 @@ function ProtectedRoute({ element }) {
   }
 
   return isAuthenticated ? element : <Navigate to="/auth" />;
+}
+
+// Public Route Component - redirect to dashboard if already logged in
+function PublicRoute({ element }) {
+  const { isAuthenticated, loading } = useContext(AuthContext);
+
+  if (loading) {
+    return <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      fontSize: '18px',
+      color: '#666'
+    }}>
+      Loading...
+    </div>;
+  }
+
+  return !isAuthenticated ? element : <Navigate to="/dashboard" />;
 }
 
 function App() {
@@ -48,9 +71,9 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/auth" element={<AuthPage />} />
+        {/* Public Routes - redirect to dashboard if logged in */}
+        <Route path="/" element={<PublicRoute element={<HomePage />} />} />
+        <Route path="/auth" element={<PublicRoute element={<AuthPage />} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/discover" element={<DiscoverPage />} />
 
@@ -58,6 +81,18 @@ function App() {
         <Route 
           path="/dashboard" 
           element={<ProtectedRoute element={<DashboardPage />} />} 
+        />
+        <Route 
+          path="/log-activity" 
+          element={<ProtectedRoute element={<LogActivityPage />} />} 
+        />
+        <Route 
+          path="/leaderboard" 
+          element={<ProtectedRoute element={<LeaderboardPage />} />} 
+        />
+        <Route 
+          path="/badges" 
+          element={<ProtectedRoute element={<BadgesPage />} />} 
         />
 
         {/* Catch-all */}

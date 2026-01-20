@@ -14,6 +14,8 @@ connectDB();
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/activities', require('./routes/activities'));
+app.use('/api/badges', require('./routes/badges'));
 
 // Health check
 app.get('/api/health', (req, res) => {

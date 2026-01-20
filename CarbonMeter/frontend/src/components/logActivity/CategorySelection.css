@@ -1,0 +1,143 @@
+.category-selection {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 1.5rem;
+  padding: 3rem;
+  border: 2px solid rgba(245, 158, 11, 0.2);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.category-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.category-subtitle {
+  font-size: 1.125rem;
+  color: #9CA3AF;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.category-card {
+  background: rgba(31, 41, 55, 0.8);
+  border: 2px solid rgba(245, 158, 11, 0.2);
+  border-radius: 1.25rem;
+  padding: 2.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+}
+
+.category-card:hover {
+  border-color: rgba(245, 158, 11, 0.6);
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(245, 158, 11, 0.3);
+  background: rgba(31, 41, 55, 0.95);
+}
+
+.category-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.category-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.category-desc {
+  font-size: 1rem;
+  color: #9CA3AF;
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.category-examples {
+  font-size: 0.875rem;
+  color: #D1D5DB;
+  background: rgba(17, 24, 39, 0.6);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-top: 1rem;
+}
+
+.category-examples strong {
+  color: #F59E0B;
+}
+
+.category-arrow {
+  position: absolute;
+  bottom: 1rem;
+  right: 1.5rem;
+  font-size: 1.5rem;
+  color: #F59E0B;
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover .category-arrow {
+  opacity: 1;
+  right: 1rem;
+}
+
+.category-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid #3B82F6;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.category-info p {
+  color: #E5E7EB;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.info-badge {
+  color: #3B82F6;
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .category-selection {
+    padding: 2rem 1.5rem;
+  }
+
+  .category-title {
+    font-size: 1.5rem;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .category-card {
+    padding: 2rem 1.5rem;
+  }
+}
