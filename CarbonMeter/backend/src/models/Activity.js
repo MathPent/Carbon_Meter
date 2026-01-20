@@ -13,7 +13,7 @@ const activitySchema = new mongoose.Schema({
   },
   logType: {
     type: String,
-    enum: ['manual', 'quick'],
+    enum: ['manual', 'quick', 'automatic'],
     default: 'manual',
   },
   description: {
@@ -25,12 +25,24 @@ const activitySchema = new mongoose.Schema({
   },
   // Transport specific data
   transportData: {
-    mode: { type: String, enum: ['road', 'air', 'rail'] },
+    mode: { type: String, enum: ['road', 'air', 'rail', 'Automatic'] },
     vehicleType: String,
     fuelType: String,
     distance: Number,
     mileage: Number,
     fuelConsumed: Number,
+    // Automatic transport fields
+    vehicleId: mongoose.Schema.Types.ObjectId,
+    vehicleModel: String,
+    vehicleFuel: String,
+    startLocation: {
+      lat: Number,
+      lng: Number
+    },
+    endLocation: {
+      lat: Number,
+      lng: Number
+    }
   },
   // Electricity specific data
   electricityData: {

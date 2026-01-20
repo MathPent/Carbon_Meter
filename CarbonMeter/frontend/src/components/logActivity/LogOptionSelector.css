@@ -120,6 +120,30 @@
   color: white;
 }
 
+.option-badge.new {
+  background: linear-gradient(135deg, #10B981, #34D399);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.option-card.automatic {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.option-card.automatic:hover {
+  border-color: rgba(16, 185, 129, 0.7);
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.3);
+}
+
 .info-note {
   background: rgba(59, 130, 246, 0.1);
   border-left: 4px solid #3B82F6;

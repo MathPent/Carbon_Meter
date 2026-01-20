@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const Activity = require('../models/Activity');
 const User = require('../models/User');
+const Vehicle = require('../models/Vehicle');
 
 // Middleware to verify JWT
 const authMiddleware = (req, res, next) => {
@@ -243,6 +244,166 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: 'Error fetching leaderboard', 
+      error: error.message 
+    });
+  }
+});
+
+// ============================================
+// AUTOMATIC TRANSPORT ROUTES
+// ============================================
+
+// Get vehicles by category
+router.get('/vehicles', async (req, res) => {
+  try {
+    const { category } = req.query;
+    
+    const query = category ? { category } : {};
+    const vehicles = await Vehicle.find(query).sort({ model: 1 });
+    
+    res.json(vehicles);
+  } catch (error) {
+    console.error('Error fetching vehicles:', error);
+    res.status(500).json({ 
+      message: 'Error fetching vehicles', 
+      error: error.message 
+    });
+  }
+});
+
+// Get all vehicle categories
+router.get('/vehicles/categories', async (req, res) => {
+  try {
+    const categories = await Vehicle.distinct('category');
+    res.json(categories);
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ 
+      message: 'Error fetching categories', 
+      error: error.message 
+    });
+  }
+});
+
+// Log automatic transport activity
+router.post('/automatic-transport', authMiddleware, async (req, res) => {
+  try {
+    const {
+      vehicleId,
+      vehicleModel,
+      vehicleFuel,
+      distance,
+      carbonEmission,
+      source,
+      startLocation,
+      endLocation
+    } = req.body;
+    
+    const userId = req.user.id;
+
+    // Validate required fields
+    if (!vehicleId || !distance || !carbonEmission || !startLocation || !endLocation) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['vehicleId', 'distance', 'carbonEmission', 'startLocation', 'endLocation']
+      });
+    }
+
+    // Verify vehicle exists
+    const vehicle = await Vehicle.findById(vehicleId);
+    if (!vehicle) {
+      return res.status(404).json({ message: 'Vehicle not found' });
+    }
+
+    // Create automatic transport activity
+    const activity = new Activity({
+      userId,
+      category: 'Transport',
+      logType: 'automatic',
+      description: `Automatic trip: ${distance} km using ${vehicleModel || vehicle.model}`,
+      carbonEmission,
+      source: source || 'Map + Location',
+      formula: `${distance} km × ${vehicle.co2_per_km} kg/km`,
+      transportData: {
+        mode: 'Automatic',
+        vehicleId,
+        vehicleModel: vehicleModel || vehicle.model,
+        vehicleFuel: vehicleFuel || vehicle.fuel,
+        distance,
+        startLocation: {
+          lat: startLocation.lat,
+          lng: startLocation.lng
+        },
+        endLocation: {
+          lat: endLocation.lat,
+          lng: endLocation.lng
+        }
+      }
+    });
+
+    await activity.save();
+
+    // Update user's total carbon footprint
+    await User.findByIdAndUpdate(
+      userId,
+      { $inc: { totalCarbonFootprint: carbonEmission } }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Automatic transport activity logged successfully',
+      activity,
+      carbonEmission
+    });
+
+  } catch (error) {
+    console.error('Error logging automatic transport:', error);
+    res.status(500).json({ 
+      message: 'Error logging automatic transport activity', 
+      error: error.message 
+    });
+  }
+});
+
+// Get automatic transport activities for a user
+router.get('/automatic-trips', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { limit = 10 } = req.query;
+
+    const activities = await Activity.find({
+      userId,
+      category: 'Transport',
+      logType: 'automatic'
+    })
+    .sort({ createdAt: -1 })
+    .limit(parseInt(limit));
+
+    // Calculate summary statistics
+    const totalTrips = activities.length;
+    const totalDistance = activities.reduce((sum, act) => 
+      sum + (act.transportData?.distance || 0), 0
+    );
+    const totalEmissions = activities.reduce((sum, act) => 
+      sum + act.carbonEmission, 0
+    );
+
+    res.json({
+      success: true,
+      trips: activities,
+      summary: {
+        totalTrips,
+        totalDistance: Number(totalDistance.toFixed(2)),
+        totalEmissions: Number(totalEmissions.toFixed(3)),
+        averageDistance: totalTrips > 0 ? Number((totalDistance / totalTrips).toFixed(2)) : 0,
+        averageEmission: totalTrips > 0 ? Number((totalEmissions / totalTrips).toFixed(3)) : 0
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching automatic trips:', error);
+    res.status(500).json({ 
+      message: 'Error fetching automatic trips', 
       error: error.message 
     });
   }

@@ -8,12 +8,13 @@ import FoodModule from '../components/logActivity/modules/FoodModule';
 import WasteModule from '../components/logActivity/modules/WasteModule';
 import QuickEstimator from '../components/logActivity/QuickEstimator';
 import EmissionDisplay from '../components/logActivity/EmissionDisplay';
+import AutomaticTransport from '../components/logActivity/AutomaticTransport';
 import './LogActivityPage.css';
 
 const LogActivityPage = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState('option'); // option, category, module, display
-  const [logType, setLogType] = useState(null); // manual, quick
+  const [currentStep, setCurrentStep] = useState('option'); // option, category, module, display, automatic
+  const [logType, setLogType] = useState(null); // manual, quick, automatic
   const [selectedCategory, setSelectedCategory] = useState(null); // transport, electricity, food, waste
   const [emissionResult, setEmissionResult] = useState(null);
   const [activityData, setActivityData] = useState(null);
@@ -24,6 +25,8 @@ const LogActivityPage = () => {
       setCurrentStep('category');
     } else if (type === 'quick') {
       setCurrentStep('quick');
+    } else if (type === 'automatic') {
+      setCurrentStep('automatic');
     }
   };
 
@@ -45,7 +48,7 @@ const LogActivityPage = () => {
     } else if (currentStep === 'module') {
       setCurrentStep('category');
       setSelectedCategory(null);
-    } else if (currentStep === 'category' || currentStep === 'quick') {
+    } else if (currentStep === 'category' || currentStep === 'quick' || currentStep === 'automatic') {
       setCurrentStep('option');
       setLogType(null);
     } else {
@@ -59,6 +62,10 @@ const LogActivityPage = () => {
     setSelectedCategory(null);
     setEmissionResult(null);
     setActivityData(null);
+  };
+
+  const handleAutomaticComplete = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -75,6 +82,7 @@ const LogActivityPage = () => {
           {currentStep === 'module' && '3/4'}
           {currentStep === 'display' && '4/4'}
           {currentStep === 'quick' && 'Quick Estimator'}
+          {currentStep === 'automatic' && 'Automatic Transport'}
         </div>
       </div>
 
@@ -106,6 +114,13 @@ const LogActivityPage = () => {
 
         {currentStep === 'quick' && (
           <QuickEstimator onBack={handleBack} />
+        )}
+
+        {currentStep === 'automatic' && (
+          <AutomaticTransport 
+            onComplete={handleAutomaticComplete}
+            onCancel={handleBack}
+          />
         )}
 
         {currentStep === 'display' && (
