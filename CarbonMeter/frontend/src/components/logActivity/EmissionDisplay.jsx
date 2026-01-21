@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './EmissionDisplay.css';
 
 const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -59,9 +61,9 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
       if (response.data.success) {
         setSaved(true);
         alert('Activity logged successfully! ✅');
-        // Trigger dashboard update
+        // Navigate to dashboard to refresh data
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard', { replace: true });
         }, 1500);
       }
     } catch (error) {

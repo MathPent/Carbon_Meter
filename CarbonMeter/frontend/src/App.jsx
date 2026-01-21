@@ -31,7 +31,7 @@ function ProtectedRoute({ element }) {
   return isAuthenticated ? element : <Navigate to="/auth" />;
 }
 
-// Public Route Component - redirect to dashboard if already logged in
+// Public Route Component - redirect to home if already logged in
 function PublicRoute({ element }) {
   const { isAuthenticated, loading } = useContext(AuthContext);
 
@@ -48,7 +48,7 @@ function PublicRoute({ element }) {
     </div>;
   }
 
-  return !isAuthenticated ? element : <Navigate to="/dashboard" />;
+  return !isAuthenticated ? element : <Navigate to="/home" />;
 }
 
 function App() {
@@ -71,8 +71,9 @@ function App() {
     <Router>
       <Navbar />
       <Routes>
-        {/* Public Routes - redirect to dashboard if logged in */}
-        <Route path="/" element={<PublicRoute element={<HomePage />} />} />
+        {/* Public Routes - HomePage is accessible to all users */}
+        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/auth" element={<PublicRoute element={<AuthPage />} />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/discover" element={<DiscoverPage />} />

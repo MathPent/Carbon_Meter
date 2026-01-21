@@ -12,10 +12,11 @@ const DashboardPage = () => {
     automaticTripsCount: 0
   });
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     fetchDashboardStats();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchDashboardStats = async () => {
     try {

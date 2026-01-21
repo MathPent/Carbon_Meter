@@ -65,7 +65,8 @@ const LogActivityPage = () => {
   };
 
   const handleAutomaticComplete = () => {
-    navigate('/dashboard');
+    // Navigate to dashboard after activity logged
+    navigate('/dashboard', { replace: true, state: { refresh: true } });
   };
 
   return (

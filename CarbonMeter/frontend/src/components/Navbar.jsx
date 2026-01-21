@@ -28,7 +28,7 @@ const Navbar = () => {
 
         {/* Navigation Links */}
         <div className="navbar-menu">
-          <Link to="/" className="navbar-link">
+          <Link to={isAuthenticated ? "/home" : "/"} className="navbar-link">
             Home
           </Link>
           <Link to="/dashboard" className="navbar-link">

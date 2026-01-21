@@ -34,7 +34,7 @@ const LoginPage = ({ onSwitchToRegister }) => {
       const response = await authAPI.login(formData);
       console.log('✅ [LoginPage] Login successful:', response.data.user.email);
       login(response.data.user, response.data.token);
-      navigate('/dashboard');
+      navigate('/home');
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Login failed';
       console.error('❌ [LoginPage] Login error:', errorMsg);
@@ -51,7 +51,7 @@ const LoginPage = ({ onSwitchToRegister }) => {
       const response = await authAPI.googleLogin(credentialResponse.credential);
       console.log('✅ [LoginPage] Google login successful');
       login(response.data.user, response.data.token);
-      navigate('/HomePage');
+      navigate('/home');
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Google login failed';
       console.error('❌ [LoginPage] Google login error:', errorMsg);

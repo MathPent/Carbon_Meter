@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './QuickEstimator.css';
 
 const QuickEstimator = ({ onBack }) => {
+  const navigate = useNavigate();
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -80,7 +82,7 @@ const QuickEstimator = ({ onBack }) => {
 
       if (response.data.success) {
         alert('Estimate saved! ✅');
-        window.location.href = '/dashboard';
+        navigate('/dashboard', { replace: true });
       }
     } catch (error) {
       console.error('Error saving estimate:', error);

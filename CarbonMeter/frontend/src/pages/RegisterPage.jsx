@@ -197,9 +197,9 @@ const RegisterPage = ({ onSwitchToLogin }) => {
 
       setSuccessMessage('🎉 ' + response.data.message);
       
-      // Redirect to dashboard after short delay
+      // Redirect to home after short delay
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/home');
       }, 1000);
 
     } catch (err) {

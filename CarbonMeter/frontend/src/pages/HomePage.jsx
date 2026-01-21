@@ -114,28 +114,7 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Badges Section */}
-      {isAuthenticated && (
-        <section className="badges-section">
-          <h2>Your Badges</h2>
-          <div className="badges-container">
-            <div className="badge">
-              <div className="badge-icon">♻️</div>
-              <div className="badge-name">Eco Hero</div>
-            </div>
-            <div className="badge">
-              <div className="badge-icon">🌱</div>
-              <div className="badge-name">Green Warrior</div>
-            </div>
-            <div className="badge">
-              <div className="badge-icon">💚</div>
-              <div className="badge-name">Climate Champion</div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* New Premium Sections */}
+      {/* Premium Educational Sections */}
       <GlobalEmissionsChart />
       <IndiaStats />
       <CO2Concentration />
