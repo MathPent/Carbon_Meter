@@ -150,6 +150,33 @@ const LoginPage = ({ onSwitchToRegister }) => {
               />
             </div>
 
+            {/* Admin Portal Link */}
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => navigate('/admin/login')}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-600 hover:text-dark-green transition-colors"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  strokeWidth={1.5} 
+                  stroke="currentColor" 
+                  className="w-4 h-4"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" 
+                  />
+                </svg>
+                <span className="text-sm font-medium">Admin Portal</span>
+              </button>
+              <p className="text-xs text-gray-500 text-center mt-1">
+                Login as system administrator
+              </p>
+            </div>
+
             {/* Sign Up Link */}
             <div className="text-center mt-6">
               <span className="text-gray-600">Don't have an account? </span>
