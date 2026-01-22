@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import CarBoxAIWidget from './components/chatbot/CarBoxAIWidget';
 import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -99,6 +100,9 @@ function App() {
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+      
+      {/* Global CarBox AI Chatbot - Available on all pages */}
+      <CarBoxAIWidget />
     </Router>
   );
 }
