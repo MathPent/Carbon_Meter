@@ -487,10 +487,14 @@ router.post('/google-login', authController.googleLogin);
  */
 router.post('/forgot-password', async (req, res) => {
   try {
+    console.log('\n🔐 [FORGOT PASSWORD] Request received');
+    console.log('Request body:', req.body);
+    
     const { email } = req.body;
 
     // ========== VALIDATION ==========
     if (!email) {
+      console.log('❌ [FORGOT PASSWORD] No email provided');
       return res.status(400).json({ 
         message: 'Email is required' 
       });
@@ -498,15 +502,18 @@ router.post('/forgot-password', async (req, res) => {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('❌ [FORGOT PASSWORD] Invalid email format');
       return res.status(400).json({ 
         message: 'Please enter a valid email address' 
       });
     }
 
     // ========== CHECK IF USER EXISTS ==========
+    console.log(`🔍 [FORGOT PASSWORD] Searching for user: ${email.toLowerCase()}`);
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
+      console.log(`⚠️ [FORGOT PASSWORD] User not found: ${email.toLowerCase()}`);
       // ⚠️ SECURITY: Don't reveal if email exists or not (prevent email enumeration)
       // Always return success for security reasons
       return res.status(200).json({
@@ -514,13 +521,16 @@ router.post('/forgot-password', async (req, res) => {
         email: email.toLowerCase(),
       });
     }
+    
+    console.log(`✅ [FORGOT PASSWORD] User found: ${user.username} (${user.email})`);
 
     // ========== GENERATE OTP ==========
     const otp = generateOtp();
-    console.log(`\n🔐 Generated password reset OTP for ${email}: ${otp}`);
+    console.log(`🔐 [FORGOT PASSWORD] Generated OTP for ${email}: ${otp}`);
 
     // Delete any existing OTP for this email
     await Otp.deleteMany({ email: email.toLowerCase() });
+    console.log(`🗑️ [FORGOT PASSWORD] Deleted old OTPs for ${email.toLowerCase()}`);
 
     // ========== SAVE OTP TO DATABASE ==========
     const newOtp = new Otp({
@@ -529,26 +539,43 @@ router.post('/forgot-password', async (req, res) => {
       purpose: 'password-reset', // Mark this OTP as for password reset
     });
     await newOtp.save();
-    console.log('💾 Password reset OTP saved to database');
+    console.log('💾 [FORGOT PASSWORD] OTP saved to database');
 
     // ========== SEND OTP EMAIL ==========
     try {
+      console.log(`📧 [FORGOT PASSWORD] Attempting to send email to: ${email}`);
       await sendOtpEmail(email, otp, 'Password Reset');
+      console.log(`✅ [FORGOT PASSWORD] Email sent successfully to: ${email}`);
     } catch (emailError) {
-      console.error('Email sending failed:', emailError.message);
-      return res.status(500).json({
-        message: 'Failed to send password reset OTP. Please try again.',
-        error: emailError.message
+      console.error('❌ [FORGOT PASSWORD] Email sending failed:', emailError.message);
+      console.error('Full error:', emailError);
+      
+      // Still save the OTP so user can try again if email fails
+      return res.status(200).json({
+        message: 'OTP generated. If email delivery fails, please check spam folder or try again.',
+        email: email.toLowerCase(),
+        expiresIn: '5 minutes',
+        nextStep: 'verify-reset-otp',
+        warning: 'Email may be delayed. Check spam folder.',
+        debug: process.env.NODE_ENV === 'development' ? `Email error: ${emailError.message}` : undefined
       });
     }
 
     // ========== SUCCESS RESPONSE ==========
-    res.status(200).json({
+    const response = {
       message: 'Password reset OTP sent successfully! Check your email.',
       email: email.toLowerCase(),
       expiresIn: '5 minutes',
       nextStep: 'verify-reset-otp'
-    });
+    };
+    
+    // In development, include OTP in response for testing
+    if (process.env.NODE_ENV === 'development') {
+      response.devOtp = otp;
+      console.log(`\n🔓 [DEV MODE] OTP for ${email}: ${otp}\n`);
+    }
+    
+    res.status(200).json(response);
 
   } catch (error) {
     console.error('❌ Error in forgot-password:', error.message);

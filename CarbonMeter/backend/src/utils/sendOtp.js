@@ -207,8 +207,13 @@ const sendOtpEmail = async (email, otp, purpose = 'Registration') => {
       html: htmlTemplate,
     };
 
-    await transporter.sendMail(mailOptions);
+    console.log(`📨 Sending email to: ${email}`);
+    console.log(`📨 From: ${process.env.EMAIL}`);
+    
+    const info = await transporter.sendMail(mailOptions);
     console.log(`✅ ${purpose} OTP sent successfully to ${email}`);
+    console.log(`📧 Message ID: ${info.messageId}`);
+    console.log(`📧 Response: ${info.response}`);
     return true;
   } catch (error) {
     console.error('❌ Error sending OTP email:', error);
