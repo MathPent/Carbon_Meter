@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import LogOptionSelector from '../components/logActivity/LogOptionSelector';
 import ManualLoggingQuestionnaire from '../components/logActivity/ManualLoggingQuestionnaire';
 import AutomaticTransport from '../components/logActivity/AutomaticTransport';
-import './LogActivityPage.css';
+import './CalculatePage.css';
 
-const LogActivityPage = () => {
+const CalculatePage = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('option'); // option, manual, automatic
 
@@ -55,10 +55,10 @@ const LogActivityPage = () => {
   };
 
   return (
-    <div className="log-activity-page">
+    <div className="calculate-page">
       {/* Header - Only show when not in manual logging */}
       {currentStep === 'option' && (
-        <div className="log-activity-header">
+        <div className="calculate-header">
           <button className="back-btn" onClick={handleBack}>
             ← Back
           </button>
@@ -70,7 +70,7 @@ const LogActivityPage = () => {
       )}
 
       {/* Main Content */}
-      <div className="log-activity-content">
+      <div className="calculate-content">
         {currentStep === 'option' && (
           <LogOptionSelector onSelect={handleLogTypeSelect} />
         )}
@@ -93,4 +93,4 @@ const LogActivityPage = () => {
   );
 };
 
-export default LogActivityPage;
+export default CalculatePage;

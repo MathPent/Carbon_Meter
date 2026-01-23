@@ -33,19 +33,6 @@ const LogOptionSelector = ({ onSelect }) => {
           </ul>
           <div className="option-badge new">New</div>
         </button>
-
-        <button className="option-card" onClick={() => onSelect('quick')}>
-          <div className="option-icon">⚡</div>
-          <h3>Quick Footprint Estimator</h3>
-          <p>Get a fast estimate by describing your activity</p>
-          <ul className="option-features">
-            <li>✓ Fast estimation</li>
-            <li>✓ Text-based input</li>
-            <li>✓ Approximate results</li>
-            <li>✓ No save unless confirmed</li>
-          </ul>
-          <div className="option-badge secondary">Quick Mode</div>
-        </button>
       </div>
 
       <div className="info-note">

@@ -1,10 +1,10 @@
-.log-activity-page {
+.calculate-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #064e3b 0%, #1e3a8a 100%);
   padding: 2rem;
 }
 
-.log-activity-header {
+.calculate-header {
   max-width: 1200px;
   margin: 0 auto 2rem;
   display: flex;
@@ -33,7 +33,7 @@
   border-color: rgba(245, 158, 11, 0.6);
 }
 
-.log-activity-header h1 {
+.calculate-header h1 {
   color: white;
   font-size: 2rem;
   font-weight: 800;
@@ -49,22 +49,22 @@
   font-size: 0.875rem;
 }
 
-.log-activity-content {
+.calculate-content {
   max-width: 1200px;
   margin: 0 auto;
 }
 
 @media (max-width: 768px) {
-  .log-activity-page {
+  .calculate-page {
     padding: 1rem;
   }
 
-  .log-activity-header {
+  .calculate-header {
     flex-direction: column;
     gap: 1rem;
   }
 
-  .log-activity-header h1 {
+  .calculate-header h1 {
     font-size: 1.5rem;
   }
 }

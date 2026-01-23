@@ -1,74 +1,73 @@
 const mongoose = require('mongoose');
 
 /**
- * MongoDB Connection Module with Atlas + Local Fallback
- * Tries Atlas first, falls back to local MongoDB if Atlas fails
- * Provides detailed connection diagnostics
+ * MongoDB Atlas Connection Module
+ * Connects ONLY to MongoDB Atlas - no local fallback
+ * If Atlas connection fails, the server will not start
  */
 
 const connectDB = async () => {
   const atlasUri = process.env.MONGODB_URI;
-  const localUri = process.env.MONGODB_LOCAL_URI || 'mongodb://localhost:27017/carbonmeter';
+
+  // Validate MongoDB URI exists
+  if (!atlasUri) {
+    console.error('❌ MONGODB_URI is not defined in environment variables');
+    console.error('🔧 Solution: Add MONGODB_URI to your .env file');
+    console.error('   Example: MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/carbonmeter');
+    process.exit(1);
+  }
+
+  // Validate it's an Atlas URI (not localhost)
+  if (atlasUri.includes('localhost') || atlasUri.includes('127.0.0.1')) {
+    console.error('❌ Local MongoDB URIs are not allowed');
+    console.error('🔧 Solution: Use MongoDB Atlas connection string only');
+    console.error('   Expected format: mongodb+srv://...');
+    process.exit(1);
+  }
 
   // Connection options
   const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000,
     socketTimeoutMS: 45000,
   };
 
-  // Try Atlas first
-  if (atlasUri) {
-    console.log('🔄 Attempting MongoDB Atlas connection...');
-    try {
-      const conn = await mongoose.connect(atlasUri, options);
-      console.log('✅ MongoDB Atlas connected successfully');
-      console.log(`   Host: ${conn.connection.host}`);
-      console.log(`   Database: ${conn.connection.name}`);
-      return conn;
-    } catch (error) {
-      console.log('⚠️ Atlas connection failed, trying local MongoDB...');
-      console.log(`   Atlas Error: ${error.message}`);
-    }
-  }
-
-  // Fallback to local MongoDB
   try {
-    console.log('🔄 Connecting to local MongoDB...');
-    const conn = await mongoose.connect(localUri, options);
-    console.log('✅ Local MongoDB connected successfully');
-    console.log(`   Host: ${conn.connection.host}`);
+    console.log('🔄 Connecting to MongoDB Atlas...');
+    const conn = await mongoose.connect(atlasUri, options);
+    
+    console.log('✅ MongoDB Atlas connected successfully');
     console.log(`   Database: ${conn.connection.name}`);
-    console.log('💡 Consider fixing Atlas connection for production use');
+    console.log(`   Cluster: ${conn.connection.host}`);
+    
     return conn;
   } catch (error) {
-    console.error('❌ Both Atlas and local MongoDB connections failed');
-    console.error(`   Local Error: ${error.message}`);
-    console.error('🔧 Solutions:');
-    console.error('   - Start local MongoDB: mongod --dbpath /path/to/data');
-    console.error('   - Fix Atlas network/credentials');
-    console.error('   - Check .env file configuration');
-    
-    // Return null to allow server to start without DB (for debugging)
-    return null;
+    console.error('❌ MongoDB Atlas connection failed');
+    console.error(`   Error: ${error.message}`);
+    console.error('🔧 Possible solutions:');
+    console.error('   - Check your internet connection');
+    console.error('   - Verify MongoDB Atlas credentials');
+    console.error('   - Check IP whitelist in Atlas dashboard');
+    console.error('   - Ensure .env file has correct MONGODB_URI');
+    process.exit(1);
   }
 };
 
-// Handle disconnection and reconnection
+// Handle disconnection
 mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️  MongoDB connection lost');
+  console.warn('⚠️  MongoDB Atlas connection lost');
 });
 
+// Handle reconnection
 mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
+  console.log('✅ MongoDB Atlas reconnected');
 });
 
+// Handle connection errors
 mongoose.connection.on('error', (error) => {
-  console.error('📡 MongoDB connection error:', error.message);
+  console.error('❌ MongoDB Atlas connection error:', error.message);
 });
-
-module.exports = connectDB;
 
 module.exports = connectDB;

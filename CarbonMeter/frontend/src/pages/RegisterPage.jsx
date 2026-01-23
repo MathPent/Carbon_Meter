@@ -28,6 +28,7 @@ const RegisterPage = ({ onSwitchToLogin }) => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [selectedRole, setSelectedRole] = useState('Individual');
+  const [organizationType, setOrganizationType] = useState('');
   
   // Step 2: OTP
   const [otp, setOtp] = useState('');
@@ -179,15 +180,31 @@ const RegisterPage = ({ onSwitchToLogin }) => {
         return;
       }
 
+      // Map display role names to backend role names
+      const roleMapping = {
+        'Individual': 'Individual',
+        'Non-Governmental Organization': 'Industry',
+        'Government Sector': 'Government'
+      };
+      
+      const backendRole = roleMapping[selectedRole] || selectedRole;
+
       // Call backend API to create account with password
-      const response = await authAPI.registerCreatePassword({
+      const requestData = {
         email,
         password,
         confirmPassword,
         firstName,
         lastName,
-        role: selectedRole,
-      });
+        role: backendRole,
+      };
+      
+      // Add organizationType for Government users
+      if (backendRole === 'Government' && organizationType) {
+        requestData.organizationType = organizationType;
+      }
+      
+      const response = await authAPI.registerCreatePassword(requestData);
 
       console.log('✅ Account created successfully:', response.data);
 
@@ -399,7 +416,13 @@ const RegisterPage = ({ onSwitchToLogin }) => {
                       <button
                         key={role}
                         type="button"
-                        onClick={() => setSelectedRole(role)}
+                        onClick={() => {
+                          setSelectedRole(role);
+                          // Reset organizationType when switching away from Government
+                          if (role !== 'Government Sector') {
+                            setOrganizationType('');
+                          }
+                        }}
                         className={`py-2 px-3 rounded text-sm font-semibold transition border ${
                           selectedRole === role
                             ? 'bg-dark-green text-off-white border-dark-green'
@@ -411,6 +434,32 @@ const RegisterPage = ({ onSwitchToLogin }) => {
                     ))}
                   </div>
                 </div>
+
+                {/* Organization Type - Only for Government Sector */}
+                {selectedRole === 'Government Sector' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Organization Type *
+                    </label>
+                    <select
+                      value={organizationType}
+                      onChange={(e) => setOrganizationType(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green focus:ring-2 focus:ring-light-green"
+                      required
+                    >
+                      <option value="">Select your organization type</option>
+                      <option value="Government Transport">Government Transport</option>
+                      <option value="Buildings & Offices">Buildings & Offices</option>
+                      <option value="Health Infrastructure">Health Infrastructure</option>
+                      <option value="Municipal Services">Municipal Services</option>
+                      <option value="Education Institutions">Education Institutions</option>
+                      <option value="Industries & PSUs">Industries & PSUs</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      🏛️ Select the type that best describes your department
+                    </p>
+                  </div>
+                )}
 
                 {/* Send OTP Button */}
                 <button

@@ -54,6 +54,9 @@ router.post('/log-manual', authMiddleware, async (req, res) => {
       case 'Waste':
         activityData.wasteData = data;
         break;
+      case 'Comprehensive':
+        activityData.comprehensiveData = data;
+        break;
     }
 
     const activity = new Activity(activityData);

@@ -1,0 +1,380 @@
+/* Government Reports Styles */
+
+.gov-reports {
+  min-height: calc(100vh - 70px);
+  background: #f7fafc;
+  padding: 2rem;
+}
+
+.reports-header {
+  margin-bottom: 2rem;
+}
+
+.reports-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0;
+}
+
+.reports-header p {
+  color: #718096;
+  margin: 0.5rem 0 0;
+  font-size: 1rem;
+}
+
+/* Message Banner */
+.message-banner {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  animation: slideDown 0.3s ease;
+}
+
+.message-banner.success {
+  background: #c6f6d5;
+  color: #22543d;
+  border-left: 4px solid #38a169;
+}
+
+.message-banner.error {
+  background: #fed7d7;
+  color: #742a2a;
+  border-left: 4px solid #e53e3e;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Report Templates */
+.report-templates {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.report-templates h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0 0 1.5rem;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.template-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.template-card:hover {
+  background: #edf2f7;
+  border-color: #2c5282;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(44, 82, 130, 0.15);
+}
+
+.template-card.selected {
+  background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+  border-color: #2c5282;
+  box-shadow: 0 8px 20px rgba(44, 82, 130, 0.3);
+}
+
+.template-card.selected .template-icon,
+.template-card.selected h4,
+.template-card.selected p {
+  color: #ffffff;
+}
+
+.template-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.template-card h4 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0 0 0.5rem;
+}
+
+.template-card p {
+  font-size: 0.9rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Report Configuration */
+.report-config {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.report-config h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0 0 1.5rem;
+}
+
+.config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.config-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.config-section label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.format-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.format-buttons button {
+  flex: 1;
+  padding: 1rem;
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2d3748;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.format-buttons button:hover {
+  background: #edf2f7;
+  border-color: #2c5282;
+}
+
+.format-buttons button.active {
+  background: #2c5282;
+  color: #ffffff;
+  border-color: #2c5282;
+}
+
+.date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.date-inputs input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.date-inputs input:focus {
+  outline: none;
+  border-color: #2c5282;
+  box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+}
+
+.date-inputs span {
+  color: #718096;
+  font-weight: 600;
+}
+
+/* Generate Button */
+.generate-btn {
+  width: 100%;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #2c5282 0%, #1a365d 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(44, 82, 130, 0.3);
+}
+
+.generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner-small {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Report Features */
+.report-features {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.report-features h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0 0 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 3px solid #2c5282;
+}
+
+.feature-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.feature-item h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2c5282;
+  margin: 0 0 0.25rem;
+}
+
+.feature-item p {
+  font-size: 0.85rem;
+  color: #718096;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Info Box */
+.reports-info {
+  background: linear-gradient(135deg, #e6f7ff 0%, #d0ebff 100%);
+  border: 2px solid #91d5ff;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.reports-info h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0 0 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reports-info p {
+  font-size: 0.95rem;
+  color: #2d3748;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+.reports-info p:last-child {
+  margin-bottom: 0;
+}
+
+.reports-info strong {
+  color: #1a365d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .gov-reports {
+    padding: 1rem;
+  }
+
+  .template-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .format-buttons {
+    flex-direction: column;
+  }
+
+  .date-inputs {
+    flex-direction: column;
+  }
+
+  .date-inputs span {
+    display: none;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}

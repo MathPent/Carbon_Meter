@@ -8,7 +8,7 @@ const activitySchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Transport', 'Electricity', 'Food', 'Waste'],
+    enum: ['Transport', 'Electricity', 'Food', 'Waste', 'Comprehensive'],
     required: true,
   },
   logType: {
@@ -65,11 +65,27 @@ const activitySchema = new mongoose.Schema({
     solidWaste: Number,
     liquidWaste: Number,
   },
+  // Comprehensive questionnaire data
+  comprehensiveData: {
+    breakdown: {
+      transport: Number,
+      electricity: Number,
+      food: Number,
+      waste: Number,
+      total: Number
+    },
+    answers: Object,
+    questionnaireType: String
+  },
   formula: {
     type: String, // Store the formula used for calculation
   },
   source: {
     type: String, // Government source reference
+  },
+  metadata: {
+    type: Object, // Store additional government-specific data
+    default: {},
   },
   date: {
     type: Date,

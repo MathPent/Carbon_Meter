@@ -202,7 +202,8 @@ router.post('/register/create-password', async (req, res) => {
       confirmPassword, 
       firstName, 
       lastName,
-      role 
+      role,
+      organizationType 
     } = req.body;
 
     // ========== VALIDATION ==========
@@ -274,20 +275,33 @@ router.post('/register/create-password', async (req, res) => {
       // Update existing unverified user
       user.password = hashedPassword;
       user.isVerified = true;
+      user.firstName = firstName;
+      user.lastName = lastName || '';
+      user.role = role || 'Individual';
+      if (role === 'Government' && organizationType) {
+        user.organizationType = organizationType;
+      }
       await user.save();
       console.log(`✏️ Updated unverified user: ${email}`);
     } else {
       // Create new user
-      user = new User({
+      const userData = {
         firstName,
         lastName: lastName || '',
         email: email.toLowerCase(),
         password: hashedPassword,
         role: role || 'Individual',
         isVerified: true, // Set to verified since OTP was verified
-      });
+      };
+      
+      // Add organizationType for Government users
+      if (role === 'Government' && organizationType) {
+        userData.organizationType = organizationType;
+      }
+      
+      user = new User(userData);
       await user.save();
-      console.log(`✅ New user created: ${email}`);
+      console.log(`✅ New user created: ${email} with role: ${role}`);
     }
 
     // ========== DELETE OTP AFTER SUCCESS ==========
@@ -316,6 +330,7 @@ router.post('/register/create-password', async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         role: user.role,
+        organizationType: user.organizationType,
         isVerified: user.isVerified,
       },
       nextStep: 'dashboard'

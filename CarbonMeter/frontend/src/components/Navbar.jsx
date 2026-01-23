@@ -34,8 +34,8 @@ const Navbar = () => {
           <Link to="/dashboard" className="navbar-link">
             Dashboard
           </Link>
-          <Link to="/log-activity" className="navbar-link">
-            Log Activity
+          <Link to="/calculate" className="navbar-link">
+            Calculate
           </Link>
           <Link to="/leaderboard" className="navbar-link">
             Leaderboard

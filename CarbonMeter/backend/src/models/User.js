@@ -25,6 +25,9 @@ const userSchema = new mongoose.Schema({
     enum: ['Individual', 'Industry', 'Government'],
     required: true,
   },
+  organizationType: {
+    type: String, // For Government users: 'Government Transport', 'Buildings & Offices', etc.
+  },
   isVerified: {
     type: Boolean,
     default: false,
