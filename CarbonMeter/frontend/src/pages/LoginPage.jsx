@@ -38,6 +38,8 @@ const LoginPage = ({ onSwitchToRegister }) => {
       // Role-based redirection
       if (response.data.user.role === 'Government') {
         navigate('/gov/dashboard');
+      } else if (response.data.user.role === 'Organization') {
+        navigate('/org/dashboard');
       } else {
         navigate('/home');
       }
@@ -61,6 +63,8 @@ const LoginPage = ({ onSwitchToRegister }) => {
       // Role-based redirection
       if (response.data.user.role === 'Government') {
         navigate('/gov/dashboard');
+      } else if (response.data.user.role === 'Organization') {
+        navigate('/org/dashboard');
       } else {
         navigate('/home');
       }

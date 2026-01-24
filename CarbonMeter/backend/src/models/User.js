@@ -22,11 +22,29 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Individual', 'Industry', 'Government'],
+    enum: ['Individual', 'Industry', 'Government', 'Organization'],
     required: true,
   },
   organizationType: {
-    type: String, // For Government users: 'Government Transport', 'Buildings & Offices', etc.
+    type: String, // For Government: 'Government Transport', For Organization: 'Manufacturing', 'Cement', 'Steel', etc.
+  },
+  // Organization-specific fields
+  organizationName: {
+    type: String,
+  },
+  industryType: {
+    type: String,
+  },
+  numberOfEmployees: {
+    type: Number,
+  },
+  annualRevenue: {
+    type: Number,
+  },
+  location: {
+    city: String,
+    state: String,
+    country: String,
   },
   isVerified: {
     type: Boolean,

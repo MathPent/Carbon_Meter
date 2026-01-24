@@ -1,0 +1,110 @@
+/* Organization Analytics & Placeholder Pages */
+
+.org-analytics,
+.org-carbon-credits,
+.org-reports,
+.org-compare {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 32px;
+}
+
+.analytics-header,
+.credits-header,
+.reports-header,
+.compare-header {
+  margin-bottom: 40px;
+}
+
+.analytics-header h1,
+.credits-header h1,
+.reports-header h1,
+.compare-header h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px 0;
+}
+
+.analytics-header p,
+.credits-header p,
+.reports-header p,
+.compare-header p {
+  font-size: 15px;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Coming Soon */
+.coming-soon {
+  background: white;
+  border: 2px dashed #cbd5e1;
+  border-radius: 16px;
+  padding: 60px 40px;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.coming-soon .icon {
+  font-size: 80px;
+  display: block;
+  margin-bottom: 24px;
+}
+
+.coming-soon h2 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 16px 0;
+}
+
+.coming-soon p {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 32px 0;
+}
+
+.coming-soon ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  display: inline-block;
+}
+
+.coming-soon li {
+  font-size: 15px;
+  color: #475569;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .org-analytics,
+  .org-carbon-credits,
+  .org-reports,
+  .org-compare {
+    padding: 20px 16px;
+  }
+
+  .analytics-header h1,
+  .credits-header h1,
+  .reports-header h1,
+  .compare-header h1 {
+    font-size: 26px;
+  }
+
+  .coming-soon {
+    padding: 40px 24px;
+  }
+
+  .coming-soon .icon {
+    font-size: 60px;
+  }
+
+  .coming-soon h2 {
+    font-size: 24px;
+  }
+}

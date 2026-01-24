@@ -13,11 +13,32 @@ const generateToken = (userId) => {
 // Register user with role selection
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      password, 
+      role,
+      // Organization-specific fields
+      organizationName,
+      industryType,
+      numberOfEmployees,
+      annualRevenue,
+      location
+    } = req.body;
 
     // Validate inputs
     if (!firstName || !email || !password || !role) {
       return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // Additional validation for Organization role
+    if (role === 'Organization') {
+      if (!organizationName || !industryType) {
+        return res.status(400).json({ 
+          message: 'Organization name and industry type are required for Organization role' 
+        });
+      }
     }
 
     // Check if user exists
@@ -27,14 +48,25 @@ exports.register = async (req, res) => {
     }
 
     // Create user
-    const user = new User({
+    const userData = {
       firstName,
       lastName: lastName || '',
       email,
       password,
       role,
-    });
+    };
 
+    // Add organization-specific data if role is Organization
+    if (role === 'Organization') {
+      userData.organizationName = organizationName;
+      userData.industryType = industryType;
+      userData.organizationType = 'manufacturing'; // Default to manufacturing
+      if (numberOfEmployees) userData.numberOfEmployees = numberOfEmployees;
+      if (annualRevenue) userData.annualRevenue = annualRevenue;
+      if (location) userData.location = location;
+    }
+
+    const user = new User(userData);
     await user.save();
 
     const token = generateToken(user._id);
@@ -45,6 +77,8 @@ exports.register = async (req, res) => {
         firstName: user.firstName,
         email: user.email,
         role: user.role,
+        organizationName: user.organizationName,
+        industryType: user.industryType,
       },
     });
   } catch (error) {
@@ -82,6 +116,8 @@ exports.login = async (req, res) => {
         firstName: user.firstName,
         email: user.email,
         role: user.role,
+        organizationName: user.organizationName,
+        industryType: user.industryType,
       },
     });
   } catch (error) {

@@ -43,3 +43,24 @@ export const setAuthToken = (token) => {
 };
 
 export const getAuthToken = () => localStorage.getItem('token');
+
+// Create axios instance with auth token interceptor
+const api = axios.create({
+  baseURL: API_URL,
+});
+
+// Add auth token to all requests
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+export default api;

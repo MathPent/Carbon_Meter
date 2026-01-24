@@ -8,12 +8,12 @@ const activitySchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['Transport', 'Electricity', 'Food', 'Waste', 'Comprehensive'],
+    enum: ['Transport', 'Electricity', 'Food', 'Waste', 'Comprehensive', 'Organization'],
     required: true,
   },
   logType: {
     type: String,
-    enum: ['manual', 'quick', 'automatic'],
+    enum: ['manual', 'quick', 'automatic', 'organization'],
     default: 'manual',
   },
   description: {
@@ -76,6 +76,18 @@ const activitySchema = new mongoose.Schema({
     },
     answers: Object,
     questionnaireType: String
+  },
+  // Organization emission data
+  organizationData: {
+    timePeriod: String,
+    startDate: Date,
+    endDate: Date,
+    scope1: Number,
+    scope2: Number,
+    scope3: Number,
+    perEmployee: Number,
+    perRevenue: Number,
+    rawData: Object,
   },
   formula: {
     type: String, // Store the formula used for calculation

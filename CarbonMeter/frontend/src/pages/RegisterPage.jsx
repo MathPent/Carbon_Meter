@@ -30,6 +30,15 @@ const RegisterPage = ({ onSwitchToLogin }) => {
   const [selectedRole, setSelectedRole] = useState('Individual');
   const [organizationType, setOrganizationType] = useState('');
   
+  // Organization-specific fields
+  const [organizationName, setOrganizationName] = useState('');
+  const [industryType, setIndustryType] = useState('');
+  const [numberOfEmployees, setNumberOfEmployees] = useState('');
+  const [annualRevenue, setAnnualRevenue] = useState('');
+  const [organizationCity, setOrganizationCity] = useState('');
+  const [organizationState, setOrganizationState] = useState('');
+  const [organizationCountry, setOrganizationCountry] = useState('India');
+  
   // Step 2: OTP
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
@@ -183,7 +192,7 @@ const RegisterPage = ({ onSwitchToLogin }) => {
       // Map display role names to backend role names
       const roleMapping = {
         'Individual': 'Individual',
-        'Non-Governmental Organization': 'Industry',
+        'Non-Governmental Organization': 'Organization',
         'Government Sector': 'Government'
       };
       
@@ -202,6 +211,19 @@ const RegisterPage = ({ onSwitchToLogin }) => {
       // Add organizationType for Government users
       if (backendRole === 'Government' && organizationType) {
         requestData.organizationType = organizationType;
+      }
+      
+      // Add organization-specific data for Organization users
+      if (backendRole === 'Organization') {
+        requestData.organizationName = organizationName;
+        requestData.industryType = industryType;
+        requestData.numberOfEmployees = numberOfEmployees ? parseInt(numberOfEmployees) : undefined;
+        requestData.annualRevenue = annualRevenue ? parseFloat(annualRevenue) : undefined;
+        requestData.location = {
+          city: organizationCity,
+          state: organizationState,
+          country: organizationCountry,
+        };
       }
       
       const response = await authAPI.registerCreatePassword(requestData);
@@ -457,6 +479,105 @@ const RegisterPage = ({ onSwitchToLogin }) => {
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       🏛️ Select the type that best describes your department
+                    </p>
+                  </div>
+                )}
+
+                {/* Organization Details - Only for Non-Governmental Organization */}
+                {selectedRole === 'Non-Governmental Organization' && (
+                  <div className="space-y-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Organization Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={organizationName}
+                        onChange={(e) => setOrganizationName(e.target.value)}
+                        placeholder="Enter organization name"
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Industry Type *
+                      </label>
+                      <select
+                        value={industryType}
+                        onChange={(e) => setIndustryType(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                        required
+                      >
+                        <option value="">Select industry type</option>
+                        <option value="Manufacturing">Manufacturing</option>
+                        <option value="Textile">Textile</option>
+                        <option value="Automobile">Automobile</option>
+                        <option value="Chemical">Chemical</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Food Processing">Food Processing</option>
+                        <option value="Pharmaceutical">Pharmaceutical</option>
+                        <option value="Construction">Construction</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Number of Employees
+                      </label>
+                      <input
+                        type="number"
+                        value={numberOfEmployees}
+                        onChange={(e) => setNumberOfEmployees(e.target.value)}
+                        placeholder="Enter number of employees"
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Annual Revenue (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={annualRevenue}
+                        onChange={(e) => setAnnualRevenue(e.target.value)}
+                        placeholder="Enter annual revenue"
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          City
+                        </label>
+                        <input
+                          type="text"
+                          value={organizationCity}
+                          onChange={(e) => setOrganizationCity(e.target.value)}
+                          placeholder="City"
+                          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          State
+                        </label>
+                        <input
+                          type="text"
+                          value={organizationState}
+                          onChange={(e) => setOrganizationState(e.target.value)}
+                          placeholder="State"
+                          className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:border-dark-green"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      🏭 Provide details about your organization for better carbon tracking
                     </p>
                   </div>
                 )}

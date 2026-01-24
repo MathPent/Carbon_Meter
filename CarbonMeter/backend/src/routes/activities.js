@@ -22,6 +22,107 @@ const authMiddleware = (req, res, next) => {
 
 const router = express.Router();
 
+// Organization: Save emission calculation
+router.post('/org-emission', authMiddleware, async (req, res) => {
+  try {
+    const { timePeriod, startDate, endDate, scope1, scope2, scope3, totalEmissions, perEmployee, perRevenue, rawData } = req.body;
+    const userId = req.user.id;
+
+    const activity = new Activity({
+      userId,
+      category: 'Organization',
+      logType: 'organization',
+      description: `Organizational emission report (${timePeriod})`,
+      carbonEmission: totalEmissions,
+      organizationData: {
+        timePeriod,
+        startDate,
+        endDate,
+        scope1,
+        scope2,
+        scope3,
+        perEmployee,
+        perRevenue,
+        rawData,
+      },
+    });
+
+    await activity.save();
+    res.status(201).json({ message: 'Organization emission saved', activity });
+  } catch (error) {
+    console.error('Error saving organization emission:', error);
+    res.status(500).json({ message: 'Error saving emission data', error: error.message });
+  }
+});
+
+// Organization: Get dashboard stats
+router.get('/org-stats', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const activities = await Activity.find({ 
+      userId, 
+      logType: 'organization' 
+    }).sort({ createdAt: -1 });
+
+    let totalEmissions = 0;
+    let scope1 = 0;
+    let scope2 = 0;
+    let scope3 = 0;
+    let lastUpdated = null;
+
+    activities.forEach(activity => {
+      if (activity.organizationData) {
+        scope1 += activity.organizationData.scope1 || 0;
+        scope2 += activity.organizationData.scope2 || 0;
+        scope3 += activity.organizationData.scope3 || 0;
+        totalEmissions += activity.carbonEmission || 0;
+        if (!lastUpdated || activity.createdAt > lastUpdated) {
+          lastUpdated = activity.createdAt;
+        }
+      }
+    });
+
+    // Get latest calculation for per-employee and per-revenue metrics
+    let perEmployee = 0;
+    let perRevenue = 0;
+    if (activities.length > 0 && activities[0].organizationData) {
+      perEmployee = activities[0].organizationData.perEmployee || 0;
+      perRevenue = activities[0].organizationData.perRevenue || 0;
+    }
+
+    res.json({
+      totalEmissions,
+      scope1,
+      scope2,
+      scope3,
+      perEmployee,
+      perRevenue,
+      lastUpdated,
+    });
+  } catch (error) {
+    console.error('Error fetching org stats:', error);
+    res.status(500).json({ message: 'Error fetching statistics', error: error.message });
+  }
+});
+
+// Organization: Get activity history
+router.get('/org-history', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const activities = await Activity.find({ 
+      userId, 
+      logType: 'organization' 
+    }).sort({ createdAt: -1 });
+
+    res.json(activities);
+  } catch (error) {
+    console.error('Error fetching org history:', error);
+    res.status(500).json({ message: 'Error fetching history', error: error.message });
+  }
+});
+
 // Log manual activity with complete data
 router.post('/log-manual', authMiddleware, async (req, res) => {
   try {

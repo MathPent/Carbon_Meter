@@ -22,17 +22,30 @@ import GovLeaderboard from './pages/gov/GovLeaderboard';
 import GovCarbonMap from './pages/gov/GovCarbonMap';
 import GovReports from './pages/gov/GovReports';
 
+// Organization pages
+import OrgDashboard from './pages/org/OrgDashboard';
+import OrgCalculate from './pages/org/OrgCalculate';
+import OrgLogActivity from './pages/org/OrgLogActivity';
+import OrgAnalytics from './pages/org/OrgAnalytics';
+import OrgCarbonCredits from './pages/org/OrgCarbonCredits';
+import OrgReports from './pages/org/OrgReports';
+import OrgCompare from './pages/org/OrgCompare';
+import OrgNavbar from './components/org/OrgNavbar';
+
 // Layout wrapper to conditionally show Navbar and Chatbot
 function ConditionalLayout({ children }) {
   const location = useLocation();
+  const { user } = useContext(AuthContext);
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isGovRoute = location.pathname.startsWith('/gov');
+  const isOrgRoute = location.pathname.startsWith('/org');
 
   return (
     <>
-      {!isAdminRoute && !isGovRoute && <Navbar />}
+      {!isAdminRoute && !isGovRoute && !isOrgRoute && <Navbar />}
+      {isOrgRoute && <OrgNavbar />}
       {children}
-      {!isAdminRoute && !isGovRoute && <CarBoxAIWidget />}
+      {!isAdminRoute && !isGovRoute && !isOrgRoute && <CarBoxAIWidget />}
     </>
   );
 }
@@ -61,6 +74,39 @@ function ProtectedRoute({ element }) {
   // Redirect government users away from individual routes
   if (user?.role === 'Government' && window.location.pathname.startsWith('/dashboard')) {
     return <Navigate to="/gov/dashboard" />;
+  }
+
+  // Redirect organization users away from individual routes
+  if (user?.role === 'Organization' && window.location.pathname.startsWith('/dashboard')) {
+    return <Navigate to="/org/dashboard" />;
+  }
+
+  return element;
+}
+
+// Organization Route Component
+function OrgRoute({ element }) {
+  const { isAuthenticated, loading, user } = useContext(AuthContext);
+
+  if (loading) {
+    return <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '100vh',
+      fontSize: '18px',
+      color: '#666'
+    }}>
+      Loading...
+    </div>;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" />;
+  }
+
+  if (user?.role !== 'Organization') {
+    return <Navigate to="/dashboard" />;
   }
 
   return element;
@@ -183,6 +229,36 @@ function App() {
           <Route 
             path="/gov/reports" 
             element={<GovRoute element={<GovReports />} />} 
+          />
+
+          {/* Organization Routes - Only for Organization role */}
+          <Route 
+            path="/org/dashboard" 
+            element={<OrgRoute element={<OrgDashboard />} />} 
+          />
+          <Route 
+            path="/org/calculate" 
+            element={<OrgRoute element={<OrgCalculate />} />} 
+          />
+          <Route 
+            path="/org/log-activity" 
+            element={<OrgRoute element={<OrgLogActivity />} />} 
+          />
+          <Route 
+            path="/org/analytics" 
+            element={<OrgRoute element={<OrgAnalytics />} />} 
+          />
+          <Route 
+            path="/org/carbon-credits" 
+            element={<OrgRoute element={<OrgCarbonCredits />} />} 
+          />
+          <Route 
+            path="/org/reports" 
+            element={<OrgRoute element={<OrgReports />} />} 
+          />
+          <Route 
+            path="/org/compare" 
+            element={<OrgRoute element={<OrgCompare />} />} 
           />
 
           {/* Protected Routes - Individual/Industry users */}
