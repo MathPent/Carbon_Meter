@@ -26,9 +26,7 @@ import GovReports from './pages/gov/GovReports';
 import OrgDashboard from './pages/org/OrgDashboard';
 import OrgCalculate from './pages/org/OrgCalculate';
 import OrgLogActivity from './pages/org/OrgLogActivity';
-import OrgAnalytics from './pages/org/OrgAnalytics';
 import OrgCarbonCredits from './pages/org/OrgCarbonCredits';
-import OrgReports from './pages/org/OrgReports';
 import OrgCompare from './pages/org/OrgCompare';
 import OrgNavbar from './components/org/OrgNavbar';
 
@@ -53,6 +51,7 @@ function ConditionalLayout({ children }) {
 // Protected Route Component
 function ProtectedRoute({ element }) {
   const { isAuthenticated, loading, user } = useContext(AuthContext);
+  const location = useLocation();
 
   if (loading) {
     return <div style={{ 
@@ -68,7 +67,8 @@ function ProtectedRoute({ element }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/auth" />;
+    // Save the intended destination
+    return <Navigate to="/auth" state={{ from: location.pathname }} replace />;
   }
 
   // Redirect government users away from individual routes
@@ -245,16 +245,8 @@ function App() {
             element={<OrgRoute element={<OrgLogActivity />} />} 
           />
           <Route 
-            path="/org/analytics" 
-            element={<OrgRoute element={<OrgAnalytics />} />} 
-          />
-          <Route 
             path="/org/carbon-credits" 
             element={<OrgRoute element={<OrgCarbonCredits />} />} 
-          />
-          <Route 
-            path="/org/reports" 
-            element={<OrgRoute element={<OrgReports />} />} 
           />
           <Route 
             path="/org/compare" 

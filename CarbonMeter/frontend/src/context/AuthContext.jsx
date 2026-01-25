@@ -43,9 +43,15 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setToken(null);
     
-    // Clear localStorage
+    // Clear all auth data from localStorage (including legacy keys)
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
+    localStorage.removeItem('token'); // legacy key
+    localStorage.removeItem('role');
+    localStorage.removeItem('userType');
+    
+    // Clear session storage
+    sessionStorage.clear();
   };
 
   const isAuthenticated = !!token && !!user;

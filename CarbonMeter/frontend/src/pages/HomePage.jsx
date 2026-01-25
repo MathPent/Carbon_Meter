@@ -32,15 +32,9 @@ const HomePage = () => {
             <div className="hero-buttons">
               <button
                 className="hero-cta-button"
-                onClick={() => navigate('/discover')}
+                onClick={() => navigate('/calculate')}
               >
                 Discover Your Footprint
-              </button>
-              <button
-                className="hero-secondary-button"
-                onClick={() => navigate('/auth')}
-              >
-                Get Started Now
               </button>
             </div>
           )}

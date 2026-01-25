@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './OrgDashboard.css';
 import api from '../../api';
+import AnalyticsAndReports from '../../components/org/AnalyticsAndReports';
 
 const OrgDashboard = () => {
   const [stats, setStats] = useState({
@@ -22,8 +23,20 @@ const OrgDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await api.get('/activities/org-stats');
-      setStats(response.data);
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/org/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+      
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error('Error fetching org dashboard data:', error);
     } finally {
@@ -162,6 +175,33 @@ const OrgDashboard = () => {
             </div>
           </div>
         </div>
+
+        <div className="intensity-card">
+          <span className="intensity-icon">🪙</span>
+          <div className="intensity-content">
+            <div className="intensity-label">Carbon Credits</div>
+            <div className="intensity-value">
+              {(stats.creditBalance || 0).toFixed(0)}
+              <span className="intensity-unit">credits</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="intensity-card">
+          <span className="intensity-icon">
+            {stats.complianceStatus === 'Good' ? '✅' : stats.complianceStatus === 'Warning' ? '⚠️' : '❌'}
+          </span>
+          <div className="intensity-content">
+            <div className="intensity-label">Compliance Status</div>
+            <div className="intensity-value" style={{
+              color: stats.complianceStatus === 'Good' ? '#10b981' 
+                : stats.complianceStatus === 'Warning' ? '#f59e0b' 
+                : '#ef4444'
+            }}>
+              {stats.complianceStatus || 'Unknown'}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Scope Breakdown */}
@@ -223,6 +263,9 @@ const OrgDashboard = () => {
         </div>
       </div>
 
+      {/* Analytics & Reports Section */}
+      <AnalyticsAndReports />
+
       {/* Quick Actions */}
       <div className="quick-actions">
         <h2>Quick Actions</h2>
@@ -239,22 +282,10 @@ const OrgDashboard = () => {
             <p>See all recorded emissions</p>
           </Link>
 
-          <Link to="/org/analytics" className="action-card">
-            <span className="action-icon">📈</span>
-            <h3>Analytics</h3>
-            <p>View trends and insights</p>
-          </Link>
-
           <Link to="/org/carbon-credits" className="action-card">
             <span className="action-icon">🪙</span>
             <h3>Carbon Credits</h3>
             <p>Offset your emissions</p>
-          </Link>
-
-          <Link to="/org/reports" className="action-card">
-            <span className="action-icon">📑</span>
-            <h3>Generate Reports</h3>
-            <p>Export PDF and CSV reports</p>
           </Link>
 
           <Link to="/org/compare" className="action-card">

@@ -55,6 +55,14 @@
   background-color: rgba(250, 204, 21, 0.1);
 }
 
+/* Button styled as link for Calculate */
+.navbar-link-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .navbar-auth {
   display: flex;
   align-items: center;

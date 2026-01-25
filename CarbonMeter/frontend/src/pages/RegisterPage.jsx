@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useContext } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { authAPI } from '../api';
 import './RegisterPage.css';
+import { AuthContext } from '../context/AuthContext';
 
 /**
  * CARBOMETER 3-STEP REGISTRATION FLOW
@@ -15,6 +16,11 @@ import './RegisterPage.css';
 
 const RegisterPage = ({ onSwitchToLogin }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useContext(AuthContext);
+  
+  // Get the intended destination from location state
+  const from = location.state?.from || null;
   
   // =========================================================================
   // STATE MANAGEMENT FOR 3-STEP REGISTRATION
@@ -230,16 +236,39 @@ const RegisterPage = ({ onSwitchToLogin }) => {
 
       console.log('✅ Account created successfully:', response.data);
 
-      // Save token and user data to localStorage
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+      // Persist auth state and update global AuthContext
+      const { token, user } = response.data;
+      try {
+        // Update context which also persists to localStorage under expected keys
+        login(user, token);
+      } catch (e) {
+        // Fallback persistence if context isn't available for some reason
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+      }
 
       setSuccessMessage('🎉 ' + response.data.message);
-      
-      // Redirect to home after short delay
+
+      // If there's a saved redirect path, use it
+      let redirectPath;
+      if (from) {
+        redirectPath = from;
+      } else {
+        // Role-based redirect (match LoginPage logic)
+        const role = response.data.user?.role;
+        if (role === 'Government') {
+          redirectPath = '/gov/dashboard';
+        } else if (role === 'Organization') {
+          redirectPath = '/org/dashboard';
+        } else {
+          redirectPath = '/home';
+        }
+      }
+
+      // Redirect after short delay so user sees success message
       setTimeout(() => {
-        navigate('/home');
-      }, 1000);
+        navigate(redirectPath, { replace: true });
+      }, 700);
 
     } catch (err) {
       console.error('Create password error:', err);

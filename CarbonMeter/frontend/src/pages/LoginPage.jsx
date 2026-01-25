@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { authAPI } from '../api';
 import { AuthContext } from '../context/AuthContext';
@@ -9,6 +9,7 @@ import './HomePage.jsx';
 
 const LoginPage = ({ onSwitchToRegister }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useContext(AuthContext);
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +18,9 @@ const LoginPage = ({ onSwitchToRegister }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Get the intended destination from location state
+  const from = location.state?.from || null;
 
   const handleInputChange = (e) => {
     setFormData({
@@ -35,13 +39,18 @@ const LoginPage = ({ onSwitchToRegister }) => {
       console.log('✅ [LoginPage] Login successful:', response.data.user.email);
       login(response.data.user, response.data.token);
       
-      // Role-based redirection
-      if (response.data.user.role === 'Government') {
-        navigate('/gov/dashboard');
-      } else if (response.data.user.role === 'Organization') {
-        navigate('/org/dashboard');
+      // If there's a saved redirect path, use it
+      if (from) {
+        navigate(from, { replace: true });
       } else {
-        navigate('/home');
+        // Role-based redirection
+        if (response.data.user.role === 'Government') {
+          navigate('/gov/dashboard');
+        } else if (response.data.user.role === 'Organization') {
+          navigate('/org/dashboard');
+        } else {
+          navigate('/home');
+        }
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Login failed';
@@ -60,13 +69,18 @@ const LoginPage = ({ onSwitchToRegister }) => {
       console.log('✅ [LoginPage] Google login successful');
       login(response.data.user, response.data.token);
       
-      // Role-based redirection
-      if (response.data.user.role === 'Government') {
-        navigate('/gov/dashboard');
-      } else if (response.data.user.role === 'Organization') {
-        navigate('/org/dashboard');
+      // If there's a saved redirect path, use it
+      if (from) {
+        navigate(from, { replace: true });
       } else {
-        navigate('/home');
+        // Role-based redirection
+        if (response.data.user.role === 'Government') {
+          navigate('/gov/dashboard');
+        } else if (response.data.user.role === 'Organization') {
+          navigate('/org/dashboard');
+        } else {
+          navigate('/home');
+        }
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Google login failed';

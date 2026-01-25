@@ -21,6 +21,7 @@ const startServer = async () => {
   app.use('/api/carbox', require('./routes/carbox'));
   app.use('/api/admin', require('./routes/admin'));
   app.use('/api/gov', require('./routes/gov'));
+  app.use('/api/org', require('./routes/org'));
 
   // Health check
   app.get('/api/health', (req, res) => {

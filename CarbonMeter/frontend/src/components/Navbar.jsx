@@ -18,6 +18,14 @@ const Navbar = () => {
     navigate('/auth');
   };
 
+  const handleCalculateClick = () => {
+    if (isAuthenticated) {
+      navigate('/calculate');
+    } else {
+      navigate('/auth', { state: { from: '/calculate' } });
+    }
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -34,9 +42,12 @@ const Navbar = () => {
           <Link to="/dashboard" className="navbar-link">
             Dashboard
           </Link>
-          <Link to="/calculate" className="navbar-link">
+          <button 
+            className="navbar-link navbar-link-button" 
+            onClick={handleCalculateClick}
+          >
             Calculate
-          </Link>
+          </button>
           <Link to="/leaderboard" className="navbar-link">
             Leaderboard
           </Link>

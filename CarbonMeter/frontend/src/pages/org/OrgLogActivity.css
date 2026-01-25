@@ -23,6 +23,35 @@
   margin: 0;
 }
 
+/* Stats Row */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-box {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+}
+
 /* Filters */
 .log-filters {
   display: flex;
@@ -30,8 +59,8 @@
   margin-bottom: 32px;
 }
 
-.log-filters button {
-  padding: 10px 20px;
+.filter-select {
+  padding: 10px 16px;
   background: white;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
@@ -42,15 +71,14 @@
   transition: all 0.3s ease;
 }
 
-.log-filters button:hover {
+.filter-select:hover {
   border-color: #3b82f6;
-  color: #3b82f6;
 }
 
-.log-filters button.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+.filter-select:focus {
+  outline: none;
   border-color: #3b82f6;
-  color: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 /* Activities List */
@@ -83,6 +111,23 @@
   border-bottom: 2px solid #f1f5f9;
 }
 
+.activity-info {
+  flex: 1;
+}
+
+.activity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
 .activity-header h3 {
   font-size: 18px;
   font-weight: 700;
@@ -97,6 +142,10 @@
 }
 
 .activity-total {
+  text-align: right;
+}
+
+.emission-value {
   font-size: 32px;
   font-weight: 800;
   color: #1e3a8a;
@@ -109,7 +158,62 @@
   margin-left: 4px;
 }
 
-/* Breakdown */
+/* Activity Details */
+.activity-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.detail-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* Activity Footer */
+.activity-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 12px;
+}
+
+.factor-info {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.factor-source {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* Breakdown (legacy compatibility) */
 .activity-breakdown {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

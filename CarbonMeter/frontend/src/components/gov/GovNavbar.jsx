@@ -12,7 +12,7 @@ const GovNavbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/auth');
+    navigate('/', { replace: true });
   };
 
   const isActive = (path) => {
