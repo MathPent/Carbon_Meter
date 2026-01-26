@@ -11,6 +11,7 @@ import DiscoverPage from './pages/DiscoverPage';
 import CalculatePage from './pages/CalculatePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import BadgesPage from './pages/BadgesPage';
+import CarbonMapPage from './pages/CarbonMapPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -269,6 +270,10 @@ function App() {
           <Route 
             path="/badges" 
             element={<ProtectedRoute element={<BadgesPage />} />} 
+          />
+          <Route 
+            path="/carbon-map" 
+            element={<CarbonMapPage />} 
           />
 
           {/* Catch-all */}

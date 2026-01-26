@@ -16,6 +16,10 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useContext(AuthContext);
 
+  const handleDiscoverClick = () => {
+    navigate('/discover');
+  };
+
   return (
     <div className="home-page">
       {/* Hero Section */}
@@ -32,7 +36,7 @@ const HomePage = () => {
             <div className="hero-buttons">
               <button
                 className="hero-cta-button"
-                onClick={() => navigate('/calculate')}
+                onClick={handleDiscoverClick}
               >
                 Discover Your Footprint
               </button>

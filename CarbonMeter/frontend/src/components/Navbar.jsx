@@ -19,11 +19,7 @@ const Navbar = () => {
   };
 
   const handleCalculateClick = () => {
-    if (isAuthenticated) {
-      navigate('/calculate');
-    } else {
-      navigate('/auth', { state: { from: '/calculate' } });
-    }
+    navigate('/discover');
   };
 
   return (
@@ -39,21 +35,28 @@ const Navbar = () => {
           <Link to={isAuthenticated ? "/home" : "/"} className="navbar-link">
             Home
           </Link>
-          <Link to="/dashboard" className="navbar-link">
-            Dashboard
-          </Link>
+          
+          {/* Calculate visible for all users */}
           <button 
             className="navbar-link navbar-link-button" 
             onClick={handleCalculateClick}
           >
             Calculate
           </button>
+          
+          {/* Dashboard only for authenticated users */}
+          {isAuthenticated && (
+            <Link to="/dashboard" className="navbar-link">
+              Dashboard
+            </Link>
+          )}
+          
           <Link to="/leaderboard" className="navbar-link">
             Leaderboard
           </Link>
-          <a href="#carbon-map" className="navbar-link">
+          <Link to="/carbon-map" className="navbar-link">
             Carbon Map
-          </a>
+          </Link>
           <a href="#tips" className="navbar-link">
             Tips
           </a>

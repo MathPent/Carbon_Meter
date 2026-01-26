@@ -2,6 +2,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import AutomaticTrips from '../components/dashboard/AutomaticTrips';
 import ActivityLog from '../components/dashboard/ActivityLog';
+import BadgesSection from '../components/dashboard/BadgesSection';
 import axios from 'axios';
 import './DashboardPage.css';
 
@@ -159,6 +160,9 @@ const DashboardPage = () => {
       <div className="dashboard-widgets">
         <AutomaticTrips />
       </div>
+
+      {/* Carbon Status & Badges */}
+      <BadgesSection emissionData={stats} />
         </div>
       )}
 
