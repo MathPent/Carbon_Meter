@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
-import axios from 'axios';
+import api from '../../api';
 import './AutomaticTrips.css';
 
 const AutomaticTrips = () => {
@@ -15,10 +15,7 @@ const AutomaticTrips = () => {
 
   const fetchAutomaticTrips = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('/api/activities/automatic-trips?limit=5', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/activities/automatic-trips?limit=5');
       
       if (response.data.success) {
         setTrips(response.data.trips);

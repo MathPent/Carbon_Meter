@@ -52,6 +52,64 @@
   margin: 0 auto;
 }
 
+/* Data Toggle */
+.data-toggle {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.toggle-label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 1rem;
+}
+
+.toggle-buttons {
+  display: flex;
+  gap: 12px;
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.toggle-btn {
+  padding: 10px 20px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.toggle-btn:hover {
+  color: #374151;
+}
+
+.toggle-btn.active {
+  background: white;
+  color: #1f2937;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dashboard Overview Wrapper */
+.dashboard-overview {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 /* Welcome Section */
 .dashboard-welcome {
   max-width: 1200px;

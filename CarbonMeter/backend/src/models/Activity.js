@@ -13,7 +13,7 @@ const activitySchema = new mongoose.Schema({
   },
   logType: {
     type: String,
-    enum: ['manual', 'quick', 'automatic', 'organization'],
+    enum: ['manual', 'quick', 'automatic', 'organization', 'ML Predicted'],
     default: 'manual',
   },
   description: {

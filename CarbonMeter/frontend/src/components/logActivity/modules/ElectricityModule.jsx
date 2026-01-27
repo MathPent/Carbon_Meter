@@ -34,7 +34,7 @@ const ElectricityModule = ({ onCalculate, onBack }) => {
       category: 'electricity',
       description: `${consump} kWh electricity consumption from ${sourceLabels[source]}`,
       consumption: consump,
-      source,
+      electricitySource: source,
       emissionFactor,
       emission: emission.toFixed(2),
       formula,

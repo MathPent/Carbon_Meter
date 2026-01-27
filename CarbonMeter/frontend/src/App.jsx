@@ -11,9 +11,10 @@ import DiscoverPage from './pages/DiscoverPage';
 import CalculatePage from './pages/CalculatePage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import BadgesPage from './pages/BadgesPage';
-import CarbonMapPage from './pages/CarbonMapPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
+import TipsPage from './pages/TipsPage';
+import CarbonMapPage from './pages/CarbonMapPage';
 
 // Government pages
 import GovDashboard from './pages/gov/GovDashboard';
@@ -272,9 +273,14 @@ function App() {
             element={<ProtectedRoute element={<BadgesPage />} />} 
           />
           <Route 
-            path="/carbon-map" 
-            element={<CarbonMapPage />} 
+            path="/tips" 
+            element={<ProtectedRoute element={<TipsPage />} />} 
           />
+          <Route 
+            path="/carbon-map" 
+            element={<ProtectedRoute element={<CarbonMapPage />} />} 
+          />
+          
 
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/" />} />

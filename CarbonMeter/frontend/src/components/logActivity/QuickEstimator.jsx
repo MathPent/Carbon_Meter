@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import './QuickEstimator.css';
 
 const QuickEstimator = ({ onBack }) => {
@@ -65,20 +65,41 @@ const QuickEstimator = ({ onBack }) => {
 
   const handleSaveEstimate = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        alert('Please login first');
+        navigate('/login');
+        return;
+      }
+
+      // Map category to proper backend category
+      let backendCategory = 'Transport'; // Default
+      const cat = result.category.toLowerCase();
+      if (cat.includes('transport') || cat.includes('drive') || cat.includes('car')) {
+        backendCategory = 'Transport';
+      } else if (cat.includes('electricity') || cat.includes('power')) {
+        backendCategory = 'Electricity';
+      } else if (cat.includes('food') || cat.includes('meal')) {
+        backendCategory = 'Food';
+      } else if (cat.includes('waste')) {
+        backendCategory = 'Waste';
+      }
+      
       const data = {
-        category: 'quick_estimate',
-        description,
-        emission: result.emission,
-        estimatedCategory: result.category,
-        breakdown: result.breakdown
+        category: backendCategory,
+        logType: 'quick',
+        description: `${description} (Quick Estimate: ${result.breakdown})`,
+        carbonEmission: parseFloat(result.emission),
+        data: {
+          originalDescription: description,
+          estimatedCategory: result.category,
+          breakdown: result.breakdown
+        },
+        source: 'Quick Footprint Estimator'
       };
 
-      const response = await axios.post(
-        'http://localhost:5000/api/activities/log-manual',
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post('/activities/log-manual', data);
 
       if (response.data.success) {
         alert('Estimate saved! ✅');
@@ -86,7 +107,7 @@ const QuickEstimator = ({ onBack }) => {
       }
     } catch (error) {
       console.error('Error saving estimate:', error);
-      alert('Failed to save estimate');
+      alert('Failed to save estimate: ' + (error.response?.data?.message || error.message));
     }
   };
 

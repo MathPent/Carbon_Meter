@@ -19,7 +19,7 @@ const Navbar = () => {
   };
 
   const handleCalculateClick = () => {
-    navigate('/discover');
+    navigate('/calculate');
   };
 
   return (
@@ -32,34 +32,35 @@ const Navbar = () => {
 
         {/* Navigation Links */}
         <div className="navbar-menu">
-          <Link to={isAuthenticated ? "/home" : "/"} className="navbar-link">
-            Home
-          </Link>
-          
-          {/* Calculate visible for all users */}
-          <button 
-            className="navbar-link navbar-link-button" 
-            onClick={handleCalculateClick}
-          >
-            Calculate
-          </button>
-          
-          {/* Dashboard only for authenticated users */}
+          {/* Show navigation links only when authenticated */}
           {isAuthenticated && (
-            <Link to="/dashboard" className="navbar-link">
-              Dashboard
-            </Link>
+            <>
+              <Link to="/home" className="navbar-link">
+                Home
+              </Link>
+              
+              <button 
+                className="navbar-link navbar-link-button" 
+                onClick={handleCalculateClick}
+              >
+                Calculate
+              </button>
+              
+              <Link to="/dashboard" className="navbar-link">
+                Dashboard
+              </Link>
+              
+              <Link to="/leaderboard" className="navbar-link">
+                Leaderboard
+              </Link>
+              <Link to="/carbon-map" className="navbar-link">
+                Carbon Map
+              </Link>
+              <Link to="/tips" className="navbar-link">
+                Tips
+              </Link>
+            </>
           )}
-          
-          <Link to="/leaderboard" className="navbar-link">
-            Leaderboard
-          </Link>
-          <Link to="/carbon-map" className="navbar-link">
-            Carbon Map
-          </Link>
-          <a href="#tips" className="navbar-link">
-            Tips
-          </a>
 
           {/* Auth Section */}
           <div className="navbar-auth">

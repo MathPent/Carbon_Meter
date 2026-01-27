@@ -177,4 +177,105 @@ router.post('/chat', extractUser, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/carbox/generate-tips
+ * 
+ * Generate personalized tips using AI based on emission data
+ * 
+ * Body:
+ *   - prompt: Detailed prompt with user emission data
+ *   - emissionData: User's emission summary
+ * 
+ * Response:
+ *   - success: Boolean
+ *   - tips: Array of tip objects
+ */
+router.post('/generate-tips', async (req, res) => {
+  try {
+    const { prompt, emissionData } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({
+        success: false,
+        error: 'Prompt is required'
+      });
+    }
+
+    console.log('💡 [CarBox AI] Generating tips for user');
+
+    // Call Nugen API with tips generation prompt
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 seconds timeout
+    let tips = []; // Declare tips at function scope
+    
+    try {
+      const nugenResponse = await fetch(NUGEN_API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${NUGEN_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: prompt
+        }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!nugenResponse.ok) {
+        console.error('❌ [CarBox AI] Tips generation failed');
+        throw new Error(`Nugen API returned ${nugenResponse.status}`);
+      }
+
+      const data = await nugenResponse.json();
+      let aiResponse = data.output || data.response || data.result || '';
+
+      console.log('📝 [CarBox AI] Raw AI response:', aiResponse.substring(0, 200));
+
+      // Try to parse JSON from AI response
+      try {
+        // Extract JSON array from response
+        const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+        if (jsonMatch) {
+          tips = JSON.parse(jsonMatch[0]);
+        } else {
+          // Fallback: response is already JSON
+          tips = JSON.parse(aiResponse);
+        }
+        
+        // Validate tip structure
+        tips = tips.filter(tip => 
+          tip.category && tip.tip && tip.impact && tip.difficulty
+        );
+
+        console.log(`✅ [CarBox AI] Generated ${tips.length} tips`);
+      } catch (parseError) {
+        console.error('⚠️ [CarBox AI] Failed to parse AI response as JSON:', parseError.message);
+        // Return empty array, will use fallback in tips route
+        tips = [];
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        console.error('⏱️ [CarBox AI] Request timeout after 25 seconds');
+        throw new Error('AI request timeout');
+      }
+      throw fetchError;
+    }
+
+    res.json({
+      success: true,
+      tips: tips
+    });
+
+  } catch (error) {
+    console.error('❌ [CarBox AI] Tips generation error:', error.message);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate tips',
+      tips: [] // Return empty to trigger fallback
+    });
+  }
+});
+
 module.exports = router;

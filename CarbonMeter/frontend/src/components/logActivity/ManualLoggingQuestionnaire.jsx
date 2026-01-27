@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './ManualLoggingQuestionnaire.css';
-import axios from 'axios';
+import api from '../../api';
 
 const ManualLoggingQuestionnaire = ({ onComplete, onCancel }) => {
   // Question database organized by category and subcategory
@@ -390,10 +390,16 @@ const ManualLoggingQuestionnaire = ({ onComplete, onCancel }) => {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
       
-      await axios.post(
-        '/api/activities/log-manual',
+      if (!token) {
+        alert('Please login first');
+        if (onComplete) onComplete();
+        return;
+      }
+      
+      await api.post(
+        '/activities/log-manual',
         {
           category: 'Comprehensive',
           logType: 'manual',
@@ -406,9 +412,6 @@ const ManualLoggingQuestionnaire = ({ onComplete, onCancel }) => {
           },
           formula: 'Multi-category emission calculation based on CPCB/IPCC standards',
           source: 'Manual Questionnaire'
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` }
         }
       );
 

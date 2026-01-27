@@ -123,26 +123,41 @@ router.get('/org-history', authMiddleware, async (req, res) => {
   }
 });
 
+// Normalize category strings (accept lower/upper case and map to enum values)
+const normalizeCategory = (category = '') => {
+  const map = {
+    transport: 'Transport',
+    electricity: 'Electricity',
+    food: 'Food',
+    waste: 'Waste',
+    comprehensive: 'Comprehensive',
+    organization: 'Organization',
+  };
+
+  const key = category.toString().trim().toLowerCase();
+  return map[key] || category;
+};
+
 // Log manual activity with complete data
 router.post('/log-manual', authMiddleware, async (req, res) => {
   try {
     const { category, logType, description, carbonEmission, data, formula, source } = req.body;
-    // Extract userId from JWT token (JWT payload has 'id' property)
     const userId = req.user.id;
 
-    // Prepare activity document based on category
+    const normalizedCategory = normalizeCategory(category);
+    const normalizedLogType = logType || 'manual';
+
     const activityData = {
       userId,
-      category,
-      logType: logType || 'manual',
+      category: normalizedCategory,
+      logType: normalizedLogType,
       description,
       carbonEmission,
       formula,
       source,
     };
 
-    // Add category-specific data
-    switch (category) {
+    switch (normalizedCategory) {
       case 'Transport':
         activityData.transportData = data;
         break;
@@ -158,6 +173,14 @@ router.post('/log-manual', authMiddleware, async (req, res) => {
       case 'Comprehensive':
         activityData.comprehensiveData = data;
         break;
+      case 'Organization':
+        activityData.organizationData = data;
+        break;
+      default:
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid activity category',
+        });
     }
 
     const activity = new Activity(activityData);
@@ -296,6 +319,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 router.get('/leaderboard', authMiddleware, async (req, res) => {
   try {
     const period = req.query.period || 'all'; // all, monthly, weekly
+    console.log('[Leaderboard] Request received. Period:', period);
     
     let dateFilter = {};
     if (period === 'monthly') {
@@ -303,11 +327,13 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       firstDayOfMonth.setDate(1);
       firstDayOfMonth.setHours(0, 0, 0, 0);
       dateFilter = { date: { $gte: firstDayOfMonth } };
+      console.log('[Leaderboard] Monthly filter:', firstDayOfMonth);
     } else if (period === 'weekly') {
       const firstDayOfWeek = new Date();
       firstDayOfWeek.setDate(firstDayOfWeek.getDate() - 7);
       firstDayOfWeek.setHours(0, 0, 0, 0);
       dateFilter = { date: { $gte: firstDayOfWeek } };
+      console.log('[Leaderboard] Weekly filter:', firstDayOfWeek);
     }
 
     // Aggregate emissions by user
@@ -324,19 +350,29 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       { $limit: 50 },
     ]);
 
+    console.log(`[Leaderboard] Found ${leaderboard.length} users in aggregation`);
+
     // Populate user details
     const leaderboardWithUsers = await Promise.all(
       leaderboard.map(async (entry, index) => {
-        const user = await User.findById(entry._id).select('username email');
+        const user = await User.findById(entry._id).select('firstName lastName email');
+        const displayName = user?.firstName 
+          ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+          : user?.email?.split('@')[0] || 'Anonymous';
+        
+        console.log(`[Leaderboard] User ${index + 1}:`, displayName, 'Emissions:', entry.totalEmissions);
+        
         return {
           rank: index + 1,
           userId: entry._id,
-          username: user?.username || 'Anonymous',
-          totalEmissions: Math.round(entry.totalEmissions * 100) / 100,
+          username: displayName,
+          totalEmissions: entry.totalEmissions > 1000000 ? 0 : Math.round(entry.totalEmissions * 100) / 100,
           activitiesCount: entry.activitiesCount,
         };
       })
     );
+
+    console.log(`[Leaderboard] Returning ${leaderboardWithUsers.length} users`);
 
     res.json({
       success: true,
@@ -344,7 +380,7 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       period,
     });
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    console.error('[Leaderboard] Error:', error);
     res.status(500).json({ 
       success: false,
       message: 'Error fetching leaderboard', 

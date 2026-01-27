@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '../../api';
 import './EmissionDisplay.css';
 
 const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
@@ -8,38 +8,63 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
+  // Provide default category if undefined
+  const effectiveCategory = category || 'general';
+
+  const normalizeCategoryKey = (value) => (value || '').toString().trim().toLowerCase();
+  
+  // Provide default emission value if undefined or invalid
+  const effectiveEmission = (emission !== undefined && emission !== null && !isNaN(emission)) 
+    ? parseFloat(emission) 
+    : 0;
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        alert('Please login first');
+        navigate('/login');
+        return;
+      }
       
       // Format data for backend
       const categoryMap = {
-        'transport': 'Transport',
-        'electricity': 'Electricity',
-        'food': 'Food',
-        'waste': 'Waste'
+        transport: 'Transport',
+        electricity: 'Electricity',
+        food: 'Food',
+        waste: 'Waste',
       };
 
+      const normalizedCategory = normalizeCategoryKey(effectiveCategory) || 'transport';
+      const apiCategory = categoryMap[normalizedCategory];
+
+      if (!apiCategory) {
+        alert('Unsupported activity category. Please try again.');
+        setSaving(false);
+        return;
+      }
+
       const activityPayload = {
-        category: categoryMap[category] || 'Transport',
+        category: apiCategory,
         logType: 'manual',
-        description: data.description || `${category} activity`,
-        carbonEmission: parseFloat(emission),
-        data: category === 'transport' ? {
+        description: data.description || `${effectiveCategory} activity`,
+        carbonEmission: effectiveEmission,
+        data: normalizedCategory === 'transport' ? {
           mode: data.transportType,
           vehicleType: data.vehicleType,
           fuelType: data.fuelType,
           distance: parseFloat(data.distance),
           mileage: data.mileage ? parseFloat(data.mileage) : null,
           fuelConsumed: data.breakdown?.fuelConsumed ? parseFloat(data.breakdown.fuelConsumed) : null
-        } : category === 'electricity' ? {
-          source: data.source,
-          consumption: parseFloat(data.breakdown?.consumption || 0)
-        } : category === 'food' ? {
+        } : normalizedCategory === 'electricity' ? {
+          source: data.electricitySource || data.source || 'grid',
+          consumption: parseFloat(data.consumption || data.breakdown?.consumption || 0)
+        } : normalizedCategory === 'food' ? {
           type: data.foodType,
           items: data.items || []
-        } : category === 'waste' ? {
+        } : normalizedCategory === 'waste' ? {
           foodWaste: parseFloat(data.foodWaste || 0),
           solidWaste: parseFloat(data.solidWaste || 0),
           liquidWaste: parseFloat(data.liquidWaste || 0)
@@ -50,13 +75,7 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
 
       console.log('Sending activity payload:', activityPayload);
 
-      const response = await axios.post(
-        'http://localhost:5000/api/activities/log-manual',
-        activityPayload,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
+      const response = await api.post('/activities/log-manual', activityPayload);
 
       if (response.data.success) {
         setSaved(true);
@@ -86,16 +105,17 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
       {/* Main Emission Value */}
       <div className="emission-result-card">
         <div className="emission-icon">
-          {category === 'transport' && '🚗'}
-          {category === 'electricity' && '⚡'}
-          {category === 'food' && '🍽️'}
-          {category === 'waste' && '🗑️'}
+          {effectiveCategory === 'transport' && '🚗'}
+          {effectiveCategory === 'electricity' && '⚡'}
+          {effectiveCategory === 'food' && '🍽️'}
+          {effectiveCategory === 'waste' && '🗑️'}
+          {effectiveCategory === 'general' && '🌍'}
         </div>
         <div className="emission-value">
-          <span className="value-number">{parseFloat(emission).toFixed(2)}</span>
+          <span className="value-number">{effectiveEmission.toFixed(2)}</span>
           <span className="value-unit">kg CO₂</span>
         </div>
-        <div className="emission-category">{category.toUpperCase()} EMISSIONS</div>
+        <div className="emission-category">{effectiveCategory.toUpperCase()} EMISSIONS</div>
       </div>
 
       {/* Breakdown Section */}
@@ -103,7 +123,7 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
         <h3>Calculation Breakdown</h3>
         
         {/* Transport Breakdown */}
-        {category === 'transport' && data.breakdown && (
+        {effectiveCategory === 'transport' && data.breakdown && (
           <div className="breakdown-details">
             <div className="breakdown-item">
               <span className="label">Transport Type:</span>
@@ -135,7 +155,7 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
         )}
 
         {/* Electricity Breakdown */}
-        {category === 'electricity' && data.breakdown && (
+        {effectiveCategory === 'electricity' && data.breakdown && (
           <div className="breakdown-details">
             <div className="breakdown-item">
               <span className="label">Source:</span>
@@ -153,7 +173,7 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
         )}
 
         {/* Food Breakdown */}
-        {category === 'food' && data.items && (
+        {effectiveCategory === 'food' && data.items && (
           <div className="breakdown-details">
             {data.items.map((item, index) => (
               <div key={index} className="breakdown-item">
@@ -165,7 +185,7 @@ const EmissionDisplay = ({ category, data, emission, onReset, onBack }) => {
         )}
 
         {/* Waste Breakdown */}
-        {category === 'waste' && data.breakdown && (
+        {effectiveCategory === 'waste' && data.breakdown && (
           <div className="breakdown-details">
             {data.foodWaste > 0 && (
               <div className="breakdown-item">

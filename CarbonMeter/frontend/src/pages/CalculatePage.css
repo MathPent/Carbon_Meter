@@ -54,6 +54,224 @@
   margin: 0 auto;
 }
 
+/* Method Selection */
+.method-selection {
+  background: rgba(17, 24, 39, 0.8);
+  border-radius: 1rem;
+  padding: 3rem;
+  border: 2px solid rgba(245, 158, 11, 0.2);
+}
+
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.method-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.method-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.95), rgba(17, 24, 39, 0.95));
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  border-radius: 1.5rem;
+  padding: 3rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  color: white;
+  position: relative;
+}
+
+.method-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(245, 158, 11, 1);
+  box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
+}
+
+.quick-card {
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.quick-card:hover {
+  border-color: rgba(59, 130, 246, 1);
+  box-shadow: 0 15px 40px rgba(59, 130, 246, 0.4);
+}
+
+.map-card {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.map-card:hover {
+  border-color: rgba(16, 185, 129, 1);
+  box-shadow: 0 15px 40px rgba(16, 185, 129, 0.4);
+}
+
+.method-badge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #F59E0B, #FBBF24);
+  color: #1F2937;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.quick-badge {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+  color: white;
+}
+
+.map-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.live-card {
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+.live-card:hover {
+  border-color: rgba(139, 92, 246, 1);
+  box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+}
+
+.live-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+}
+
+.method-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+}
+
+.method-card h3 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.method-card p {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.method-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  display: inline-block;
+}
+
+.method-features li {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.95rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.method-features li:last-child {
+  border-bottom: none;
+}
+
+/* Category Selection */
+.category-selection {
+  background: rgba(17, 24, 39, 0.8);
+  border-radius: 1rem;
+  padding: 3rem;
+  border: 2px solid rgba(245, 158, 11, 0.2);
+}
+
+.section-title {
+  color: white;
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.category-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.9));
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  border-radius: 1rem;
+  padding: 2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  color: white;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(245, 158, 11, 0.8);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.1));
+  box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+}
+
+.category-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.category-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #FBBF24;
+}
+
+.category-card p {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.info-note {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 0.75rem;
+  padding: 1rem 1.5rem;
+}
+
+.info-icon {
+  font-size: 1.5rem;
+}
+
+.info-note p {
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
 @media (max-width: 768px) {
   .calculate-page {
     padding: 1rem;
@@ -66,5 +284,28 @@
 
   .calculate-header h1 {
     font-size: 1.5rem;
+  }
+
+  .category-selection {
+    padding: 1.5rem;
+  }
+
+  .method-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .method-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .method-card {
+    padding: 2rem;
   }
 }

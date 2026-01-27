@@ -23,6 +23,11 @@ const startServer = async () => {
   app.use('/api/gov', require('./routes/gov'));
   app.use('/api/org', require('./routes/org'));
   app.use('/api/map', require('./routes/map'));
+  app.use('/api/vehicles', require('./routes/vehicles'));
+  app.use('/api/automatic-transport', require('./routes/automatic-transport'));
+  app.use('/api/live-transport', require('./routes/live-transport'));
+  app.use('/api/prediction', require('./routes/prediction'));
+  app.use('/api/tips', require('./routes/tips'));
 
   // Health check
   app.get('/api/health', (req, res) => {

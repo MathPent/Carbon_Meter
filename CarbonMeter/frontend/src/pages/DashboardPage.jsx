@@ -3,12 +3,14 @@ import { AuthContext } from '../context/AuthContext';
 import AutomaticTrips from '../components/dashboard/AutomaticTrips';
 import ActivityLog from '../components/dashboard/ActivityLog';
 import BadgesSection from '../components/dashboard/BadgesSection';
-import axios from 'axios';
+import PredictionCard from '../components/dashboard/PredictionCard';
+import api from '../api';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
   const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState('overview'); // overview, log-activity
+  const [includePredicted, setIncludePredicted] = useState(false); // Toggle for predicted data
   const [stats, setStats] = useState({
     totalEmissions: 0,
     dailyEmissions: 0,
@@ -26,13 +28,8 @@ const DashboardPage = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const config = {
-        headers: { Authorization: `Bearer ${token}` }
-      };
-
       // Fetch user statistics from correct endpoint
-      const statsResponse = await axios.get('/api/activities/user-stats', config);
+      const statsResponse = await api.get('/activities/user-stats');
       const data = statsResponse.data;
 
       if (data.success) {
@@ -81,6 +78,28 @@ const DashboardPage = () => {
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="dashboard-overview">
+          {/* Toggle for Real vs Predicted Data */}
+          <div className="data-toggle">
+            <span className="toggle-label">Data View:</span>
+            <div className="toggle-buttons">
+              <button
+                className={`toggle-btn ${!includePredicted ? 'active' : ''}`}
+                onClick={() => setIncludePredicted(false)}
+              >
+                📊 Real Data Only
+              </button>
+              <button
+                className={`toggle-btn ${includePredicted ? 'active' : ''}`}
+                onClick={() => setIncludePredicted(true)}
+              >
+                🤖 Include Predicted
+              </button>
+            </div>
+          </div>
+
+          {/* ML Prediction Card */}
+          <PredictionCard />
+
           {/* Stats Cards */}
           <div className="dashboard-stats">
         <div className="stat-card">

@@ -15,17 +15,20 @@ const LeaderboardPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
+      console.log('Fetching leaderboard with period:', period);
       const response = await axios.get(`http://localhost:5000/api/activities/leaderboard?period=${period}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
+      console.log('Leaderboard response:', response.data);
       if (response.data.success) {
         setLeaderboard(response.data.leaderboard);
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
+      console.error('Error details:', error.response?.data);
     } finally {
       setLoading(false);
     }
