@@ -10,6 +10,7 @@ import VisualStorytelling from '../components/home/VisualStorytelling';
 import InteractiveGraph from '../components/home/InteractiveGraph';
 import CTASection from '../components/home/CTASection';
 import DataSources from '../components/home/DataSources';
+import EarthBackground from '../components/animations/EarthBackground';
 import './HomePage.css';
 
 const HomePage = () => {
@@ -22,14 +23,20 @@ const HomePage = () => {
 
   return (
     <div className="home-page">
-      {/* Hero Section */}
-      <section className="hero-section">
+      {/* Animated Earth Background */}
+      <EarthBackground />
+      
+      {/* Homepage Content */}
+      <main className="homepage-content">
+        {/* Hero Section */}
+        <section className="hero-section">
         <div className="hero-content">
           <h1 className="hero-title">
-            "Every ton of carbon saved is a step toward a sustainable future."
+            <span className="hero-title-line1">Carbon Emissions are Invisible</span>
+            <span className="hero-title-line2">But Their Impact is Everywhere</span>
           </h1>
           <p className="hero-subtitle">
-            Join thousands of climate-conscious individuals making a difference
+            Track it. Understand it. Reduce it.
           </p>
 
           {!isAuthenticated && (
@@ -131,6 +138,7 @@ const HomePage = () => {
       <footer className="footer">
         <p>&copy; 2026 CarbonMeter. Helping you track and reduce your carbon footprint.</p>
       </footer>
+      </main>
     </div>
   );
 };

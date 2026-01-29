@@ -18,55 +18,82 @@ router.post('/automatic-transport', auth, async (req, res) => {
       fuel
     } = req.body;
 
+    console.log('[Automatic Transport] Request received:', {
+      vehicleId,
+      vehicleModel,
+      distance,
+      carbonEmission,
+      hasStartLocation: !!startLocation,
+      hasEndLocation: !!endLocation,
+      fuel
+    });
+
     // Validate required fields
     if (!vehicleId || !distance || carbonEmission === undefined) {
+      console.log('[Automatic Transport] Missing required fields');
       return res.status(400).json({
         success: false,
         message: 'Missing required fields: vehicleId, distance, carbonEmission'
       });
     }
 
+    // Get user ID (handle both formats)
+    const userId = req.user.id || req.user._id;
+    console.log('[Automatic Transport] User ID:', userId);
+
     // Create activity
     const activity = new Activity({
-      userId: req.user._id,
+      userId: userId,
       category: 'Transport',
       logType: 'automatic',
       description: `Map-based transport: ${vehicleModel || 'Vehicle'} - ${distance.toFixed(2)} km`,
-      carbonEmission,
+      carbonEmission: Number(carbonEmission.toFixed(3)),
       transportData: {
         mode: 'Automatic',
         vehicleId,
         vehicleModel,
         vehicleFuel: fuel,
-        distance,
-        startLocation,
-        endLocation
+        distance: Number(distance.toFixed(2)),
+        startLocation: startLocation || null,
+        endLocation: endLocation || null
       },
       source: 'Map + Location',
+      date: new Date(),
       createdAt: new Date()
     });
 
     await activity.save();
+    console.log('[Automatic Transport] Activity saved:', activity._id);
 
-    // Update user totals
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.totalEmissions = (user.totalEmissions || 0) + carbonEmission;
-      user.lastActivityDate = new Date();
-      await user.save();
+    // Update user totals (non-blocking)
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        user.totalEmissions = (user.totalEmissions || 0) + carbonEmission;
+        user.lastActivityDate = new Date();
+        await user.save();
+        console.log('[Automatic Transport] User totals updated');
+      }
+    } catch (userError) {
+      console.error('[Automatic Transport] Error updating user:', userError.message);
     }
 
     res.status(201).json({
       success: true,
       message: 'Activity saved successfully',
-      data: activity
+      data: {
+        _id: activity._id,
+        distance: activity.transportData.distance,
+        carbonEmission: activity.carbonEmission,
+        createdAt: activity.createdAt
+      }
     });
   } catch (error) {
-    console.error('Error saving automatic transport activity:', error);
+    console.error('[Automatic Transport] Error:', error);
     res.status(500).json({
       success: false,
       message: 'Error saving activity',
-      error: error.message
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 });

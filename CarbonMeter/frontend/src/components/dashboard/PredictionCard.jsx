@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api';
+import { predictionAPI } from '../../api';
 import './PredictionCard.css';
 
 const PredictionCard = () => {
@@ -10,6 +10,7 @@ const PredictionCard = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [error, setError] = useState('');
+  const [showAllDates, setShowAllDates] = useState(false);
 
   useEffect(() => {
     fetchMissingDays();
@@ -18,7 +19,7 @@ const PredictionCard = () => {
   const fetchMissingDays = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/prediction/missing-days');
+      const response = await predictionAPI.getMissingDays();
       
       if (response.data.success) {
         setMissingDays(response.data.missingDays || []);
@@ -37,15 +38,17 @@ const PredictionCard = () => {
       setError('');
       setSelectedDate(date);
       
-      const response = await api.post('/prediction/predict-missing-day', { date });
+      const response = await predictionAPI.predictMissingDay(date);
       
       if (response.data.success) {
         setPrediction({
-          date,
-          emission: response.data.predictedEmission,
+          date: response.data.date || date,
+          emission: response.data.predicted_co2,
           confidence: response.data.confidence,
           daysUsed: response.data.daysUsed,
-          message: response.data.message
+          message: response.data.message,
+          demo: response.data.demo || false,
+          breakdown: response.data.breakdown || null
         });
       }
     } catch (err) {
@@ -64,13 +67,16 @@ const PredictionCard = () => {
       setSaving(true);
       setError('');
       
-      const response = await api.post('/prediction/save-predicted-emission', {
+      const response = await predictionAPI.confirmPrediction({
         date: prediction.date,
-        predictedEmission: prediction.emission
+        carbonEmission: prediction.emission,
+        confidence: prediction.confidence,
+        source: 'Predicted (ML)',
+        breakdown: prediction.breakdown
       });
       
       if (response.data.success) {
-        alert('✅ Prediction saved successfully!');
+        alert('✅ Prediction confirmed and saved successfully!');
         
         // Remove saved date from missing days
         setMissingDays(prev => prev.filter(d => d !== prediction.date));
@@ -79,7 +85,7 @@ const PredictionCard = () => {
         setPrediction(null);
         setSelectedDate(null);
         
-        // Optionally refresh dashboard
+        // Reload page to update dashboard and leaderboard
         window.location.reload();
       }
     } catch (err) {
@@ -102,12 +108,21 @@ const PredictionCard = () => {
   };
 
   const getConfidenceBadge = (confidence) => {
+    // Handle both numeric (0-1) and string confidence values
+    let confLevel = confidence;
+    
+    if (typeof confidence === 'number') {
+      if (confidence >= 0.85) confLevel = 'high';
+      else if (confidence >= 0.70) confLevel = 'medium';
+      else confLevel = 'low';
+    }
+    
     const badges = {
       low: { icon: '⚠️', label: 'Low Confidence', class: 'confidence-low' },
       medium: { icon: '📊', label: 'Medium Confidence', class: 'confidence-medium' },
       high: { icon: '✅', label: 'High Confidence', class: 'confidence-high' }
     };
-    return badges[confidence] || badges.low;
+    return badges[confLevel] || badges.low;
   };
 
   const formatDate = (dateStr) => {
@@ -162,7 +177,7 @@ const PredictionCard = () => {
               <p className="list-subtitle">Select a date to predict emission</p>
               
               <div className="dates-grid">
-                {missingDays.slice(0, 5).map((date) => (
+                {(showAllDates ? missingDays : missingDays.slice(0, 5)).map((date) => (
                   <div key={date} className="date-item">
                     <div className="date-info">
                       <span className="date-icon">📅</span>
@@ -187,7 +202,22 @@ const PredictionCard = () => {
               </div>
               
               {missingDays.length > 5 && (
-                <p className="more-dates">+ {missingDays.length - 5} more dates</p>
+                <button 
+                  className="show-more-btn"
+                  onClick={() => setShowAllDates(!showAllDates)}
+                >
+                  {showAllDates ? (
+                    <>
+                      <span>Show Less</span>
+                      <span className="arrow-icon">▲</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Show All {missingDays.length} Dates</span>
+                      <span className="arrow-icon">▼</span>
+                    </>
+                  )}
+                </button>
               )}
             </div>
           ) : (
@@ -206,6 +236,35 @@ const PredictionCard = () => {
                   <span className="value-number">{prediction.emission.toFixed(2)}</span>
                   <span className="value-unit">kg CO₂</span>
                 </div>
+              
+              {/* Breakdown Display */}
+              {prediction.breakdown && (
+                <div className="emission-breakdown">
+                  <div className="breakdown-title">Category Breakdown:</div>
+                  <div className="breakdown-items">
+                    <div className="breakdown-item">
+                      <span className="breakdown-icon">🚗</span>
+                      <span className="breakdown-label">Transport:</span>
+                      <span className="breakdown-value">{prediction.breakdown.transport.toFixed(2)} kg</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-icon">💡</span>
+                      <span className="breakdown-label">Electricity:</span>
+                      <span className="breakdown-value">{prediction.breakdown.electricity.toFixed(2)} kg</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-icon">🍽️</span>
+                      <span className="breakdown-label">Food:</span>
+                      <span className="breakdown-value">{prediction.breakdown.food.toFixed(2)} kg</span>
+                    </div>
+                    <div className="breakdown-item">
+                      <span className="breakdown-icon">🗑️</span>
+                      <span className="breakdown-label">Waste:</span>
+                      <span className="breakdown-value">{prediction.breakdown.waste.toFixed(2)} kg</span>
+                    </div>
+                  </div>
+                </div>
+              )}
                 <div className={`confidence-badge ${getConfidenceBadge(prediction.confidence).class}`}>
                   <span>{getConfidenceBadge(prediction.confidence).icon}</span>
                   <span>{getConfidenceBadge(prediction.confidence).label}</span>
@@ -216,6 +275,11 @@ const PredictionCard = () => {
                 <p>
                   <strong>Based on:</strong> {prediction.daysUsed} recent day{prediction.daysUsed !== 1 ? 's' : ''} of activity
                 </p>
+                {prediction.demo && (
+                  <p className="demo-mode-badge">
+                    🔹 Demo Mode - ML service unavailable or insufficient data
+                  </p>
+                )}
                 {prediction.message && (
                   <p className="result-note">{prediction.message}</p>
                 )}
@@ -224,10 +288,11 @@ const PredictionCard = () => {
               <div className="result-explanation">
                 <h5>ℹ️ How it works:</h5>
                 <ul>
-                  <li>Analyzes your recent emission patterns</li>
-                  <li>Uses machine learning to predict similar days</li>
-                  <li>More history = higher confidence</li>
-                  <li>Must be confirmed before saving</li>
+                  <li>Analyzes your recent emission patterns (last 10-20 days)</li>
+                  <li>Uses machine learning behavioral trend model</li>
+                  <li>More history = higher prediction confidence</li>
+                  <li>Must be confirmed before saving to database</li>
+                  <li>Marked as "ML Predicted" in your activity log</li>
                 </ul>
               </div>
               

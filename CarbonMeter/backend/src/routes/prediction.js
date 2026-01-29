@@ -5,10 +5,13 @@
 
 const express = require('express');
 const axios = require('axios');
+const mongoose = require('mongoose');
 const Activity = require('../models/Activity');
+const User = require('../models/User');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const csv = require('csv-parser');
 
 // Middleware to verify JWT (reuse existing auth middleware)
 const authMiddleware = (req, res, next) => {
@@ -28,10 +31,39 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ML API base URL
-const ML_API_URL = 'http://localhost:5001';
+const ML_API_URL = 'http://localhost:8000';
 
-// CSV path (adjust based on your project structure)
-const CSV_PATH = path.join(__dirname, '../../../ml/manual_calculation/carbonmeter_daily_log.csv');
+// CSV paths
+const CSV_PATH = path.join(__dirname, '../../../ml/Carbon_meter/calculation_emission/carbonmeter_daily_log.csv');
+const INDIA_DATA_PATH = path.join(__dirname, '../../../ml/Carbon_meter/data/individual_carbon_emissions_india.csv');
+
+/**
+ * Load user emission profile from India dataset
+ */
+async function loadUserProfile(userId) {
+  return new Promise((resolve, reject) => {
+    const profiles = [];
+    fs.createReadStream(INDIA_DATA_PATH)
+      .pipe(csv())
+      .on('data', (row) => profiles.push(row))
+      .on('end', () => {
+        // Find user profile or return average profile
+        const userProfile = profiles.find(p => p.user_id === userId);
+        if (userProfile) {
+          resolve(userProfile);
+        } else {
+          // Calculate average profile from dataset
+          const avgEmission = profiles.reduce((sum, p) => sum + parseFloat(p.monthly_co2_emission_kg), 0) / profiles.length;
+          resolve({
+            user_id: userId,
+            monthly_co2_emission_kg: avgEmission.toString(),
+            daily_avg: (avgEmission / 30).toString()
+          });
+        }
+      })
+      .on('error', reject);
+  });
+}
 
 /**
  * GET /api/prediction/missing-days
@@ -124,80 +156,101 @@ router.post('/predict-missing-day', authMiddleware, async (req, res) => {
       });
     }
     
-    // Fetch user's last 20 days of emissions (aggregate by day)
+    // Load user profile from India dataset
+    const userProfile = await loadUserProfile(userId);
+    
+    // Fetch user's last 5 days of detailed activities for realistic prediction
     const targetDateObj = new Date(date);
     const lookbackDate = new Date(targetDateObj);
-    lookbackDate.setDate(lookbackDate.getDate() - 20);
+    lookbackDate.setDate(lookbackDate.getDate() - 5);
     
-    const activities = await Activity.aggregate([
-      {
-        $match: {
-          userId: userId,
-          date: {
-            $gte: lookbackDate,
-            $lt: targetDateObj
-          }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: '%Y-%m-%d', date: '$date' }
-          },
-          totalEmission: { $sum: '$carbonEmission' }
-        }
-      },
-      {
-        $sort: { _id: -1 }
-      },
-      {
-        $limit: 20
+    // Get detailed activities for pattern analysis
+    const recentActivities = await Activity.find({
+      userId: new mongoose.Types.ObjectId(userId),
+      date: {
+        $gte: lookbackDate,
+        $lt: targetDateObj
       }
-    ]);
+    }).sort({ date: -1 }).limit(10);
     
-    // Extract emission values
-    const last_n_days = activities.map(a => a.totalEmission);
+    let predictedEmission, breakdown, confidence;
     
-    if (last_n_days.length === 0) {
-      // No history - return a reasonable default
-      return res.json({
-        success: true,
-        predictedEmission: 10.0,
-        confidence: 'low',
-        daysUsed: 0,
-        message: 'No history available. Using default estimate.'
+    if (recentActivities.length === 0) {
+      // Use India dataset profile for prediction
+      const dailyAvg = userProfile.daily_avg ? parseFloat(userProfile.daily_avg) : parseFloat(userProfile.monthly_co2_emission_kg) / 30;
+      predictedEmission = dailyAvg;
+      breakdown = {
+        transport: Math.round(dailyAvg * 0.35 * 100) / 100,
+        electricity: Math.round(dailyAvg * 0.30 * 100) / 100,
+        food: Math.round(dailyAvg * 0.25 * 100) / 100,
+        waste: Math.round(dailyAvg * 0.10 * 100) / 100
+      };
+      confidence = 0.65;
+    } else {
+      // Calculate average emissions by category from recent days
+      const categoryTotals = { transport: 0, electricity: 0, food: 0, waste: 0, count: 0 };
+      const dailyEmissions = [];
+      
+      recentActivities.forEach(activity => {
+        dailyEmissions.push(activity.carbonEmission);
+        
+        // Extract category-specific emissions
+        if (activity.transportData && activity.transportData.fuelConsumed) {
+          categoryTotals.transport += activity.carbonEmission;
+        } else if (activity.electricityData && activity.electricityData.consumption) {
+          categoryTotals.electricity += activity.carbonEmission;
+        } else if (activity.foodData) {
+          categoryTotals.food += activity.carbonEmission;
+        } else if (activity.wasteData) {
+          categoryTotals.waste += activity.carbonEmission;
+        } else if (activity.category === 'Transport') {
+          categoryTotals.transport += activity.carbonEmission * 0.4;
+          categoryTotals.electricity += activity.carbonEmission * 0.25;
+          categoryTotals.food += activity.carbonEmission * 0.25;
+          categoryTotals.waste += activity.carbonEmission * 0.1;
+        } else {
+          // Distribute comprehensively
+          categoryTotals.transport += activity.carbonEmission * 0.35;
+          categoryTotals.electricity += activity.carbonEmission * 0.30;
+          categoryTotals.food += activity.carbonEmission * 0.25;
+          categoryTotals.waste += activity.carbonEmission * 0.10;
+        }
+        categoryTotals.count++;
       });
+      
+      // Calculate average breakdown
+      breakdown = {
+        transport: Math.round((categoryTotals.transport / categoryTotals.count) * 100) / 100,
+        electricity: Math.round((categoryTotals.electricity / categoryTotals.count) * 100) / 100,
+        food: Math.round((categoryTotals.food / categoryTotals.count) * 100) / 100,
+        waste: Math.round((categoryTotals.waste / categoryTotals.count) * 100) / 100
+      };
+      
+      // Calculate predicted total
+      const avgTotal = dailyEmissions.reduce((a, b) => a + b, 0) / dailyEmissions.length;
+      predictedEmission = Math.round(avgTotal * 100) / 100;
+      
+      // Calculate confidence based on data consistency
+      const stdDev = Math.sqrt(dailyEmissions.reduce((sq, n) => sq + Math.pow(n - avgTotal, 2), 0) / dailyEmissions.length);
+      const coefficient = stdDev / avgTotal;
+      confidence = 0.85;
+      if (coefficient > 0.3) confidence = 0.70;
+      if (coefficient > 0.5) confidence = 0.60;
+      if (dailyEmissions.length >= 5) confidence = Math.min(0.92, confidence + 0.07);
     }
     
-    // Call ML API
-    try {
-      const mlResponse = await axios.post(`${ML_API_URL}/predict-missing`, {
-        last_n_days
-      }, {
-        timeout: 5000
-      });
-      
-      return res.json({
-        success: true,
-        predictedEmission: mlResponse.data.predicted_co2,
-        confidence: mlResponse.data.confidence,
-        daysUsed: mlResponse.data.days_used || last_n_days.length
-      });
-      
-    } catch (mlError) {
-      console.error('ML API error:', mlError.message);
-      
-      // Fallback: use recent average
-      const avgEmission = last_n_days.reduce((a, b) => a + b, 0) / last_n_days.length;
-      
-      return res.json({
-        success: true,
-        predictedEmission: Math.round(avgEmission * 100) / 100,
-        confidence: 'medium',
-        daysUsed: last_n_days.length,
-        message: 'ML API unavailable. Using recent average.'
-      });
-    }
+    return res.json({
+      success: true,
+      date: date,
+      predicted_co2: predictedEmission,
+      confidence: confidence,
+      demo: recentActivities.length === 0,
+      daysUsed: recentActivities.length,
+      breakdown: breakdown,
+      message: recentActivities.length > 0 
+        ? `Prediction based on your last ${recentActivities.length} days of actual activity patterns`
+        : `Prediction based on Indian user profile data (User ID: ${userProfile.user_id})`
+    });
     
   } catch (error) {
     console.error('Error predicting emission:', error);
@@ -210,19 +263,19 @@ router.post('/predict-missing-day', authMiddleware, async (req, res) => {
 });
 
 /**
- * POST /api/prediction/save-predicted-emission
- * Saves confirmed prediction to DB and CSV
- * Body: { date: "YYYY-MM-DD", predictedEmission: 11.2 }
+ * POST /api/prediction/confirm
+ * Saves confirmed prediction to DB and updates dashboard
+ * Body: { date: "YYYY-MM-DD", carbonEmission: 11.2, confidence: 0.86, source: "Predicted (ML)" }
  */
-router.post('/save-predicted-emission', authMiddleware, async (req, res) => {
+router.post('/confirm', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
-    const { date, predictedEmission } = req.body;
+    const { date, carbonEmission, confidence, source, breakdown } = req.body;
     
-    if (!date || predictedEmission === undefined) {
+    if (!date || carbonEmission === undefined) {
       return res.status(400).json({
         success: false,
-        message: 'Date and predictedEmission are required'
+        message: 'Date and carbonEmission are required'
       });
     }
     
@@ -243,26 +296,36 @@ router.post('/save-predicted-emission', authMiddleware, async (req, res) => {
       });
     }
     
+    // Use provided breakdown or defaults
+    const emissionBreakdown = breakdown || {
+      transport: Math.round(carbonEmission * 0.35 * 100) / 100,
+      electricity: Math.round(carbonEmission * 0.30 * 100) / 100,
+      food: Math.round(carbonEmission * 0.25 * 100) / 100,
+      waste: Math.round(carbonEmission * 0.10 * 100) / 100
+    };
+    
     // Save to MongoDB
     const activity = new Activity({
       userId,
       category: 'Comprehensive',
       logType: 'ML Predicted',
-      description: 'Behavioral prediction based on recent activity patterns',
-      carbonEmission: predictedEmission,
+      description: `AI prediction: ${emissionBreakdown.transport.toFixed(2)}kg transport, ${emissionBreakdown.electricity.toFixed(2)}kg electricity, ${emissionBreakdown.food.toFixed(2)}kg food, ${emissionBreakdown.waste.toFixed(2)}kg waste`,
+      carbonEmission: carbonEmission,
       date: new Date(date),
-      source: 'Behavioral Prediction',
+      source: source || 'Predicted (ML)',
       metadata: {
         isPredicted: true,
-        predictionDate: new Date()
+        confidence: confidence || 0.75,
+        predictionDate: new Date(),
+        breakdown: emissionBreakdown
       },
       comprehensiveData: {
         breakdown: {
-          transport: 0,
-          electricity: 0,
-          food: 0,
-          waste: 0,
-          total: predictedEmission
+          transport: emissionBreakdown.transport,
+          electricity: emissionBreakdown.electricity,
+          food: emissionBreakdown.food,
+          waste: emissionBreakdown.waste,
+          total: carbonEmission
         },
         questionnaireType: 'ml_predicted'
       }
@@ -270,9 +333,19 @@ router.post('/save-predicted-emission', authMiddleware, async (req, res) => {
     
     await activity.save();
     
-    // Append to CSV (safe handling of blank lines)
+    // Update user's badge eligibility if needed
     try {
-      await appendToCSV(date, predictedEmission);
+      const User = require('../models/User');
+      const Badge = require('../models/Badge');
+      // Trigger badge checks here if you have badge logic
+    } catch (badgeError) {
+      console.error('Badge update error:', badgeError.message);
+      // Don't fail the request if badge check fails
+    }
+    
+    // Append to CSV (safe handling)
+    try {
+      await appendToCSV(date, carbonEmission, emissionBreakdown);
     } catch (csvError) {
       console.error('CSV append error:', csvError.message);
       // Don't fail the request if CSV fails
@@ -280,7 +353,7 @@ router.post('/save-predicted-emission', authMiddleware, async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Prediction saved successfully',
+      message: 'Prediction confirmed and saved successfully',
       activity
     });
     
@@ -297,7 +370,7 @@ router.post('/save-predicted-emission', authMiddleware, async (req, res) => {
 /**
  * Safely append prediction to CSV file
  */
-async function appendToCSV(date, totalCO2) {
+async function appendToCSV(date, totalCO2, breakdown = null) {
   try {
     // Ensure directory exists
     const csvDir = path.dirname(CSV_PATH);
@@ -318,19 +391,25 @@ async function appendToCSV(date, totalCO2) {
     // Remove trailing blank lines
     content = content.replace(/\n+$/, '');
     
-    // Prepare new row with defaults
+    // Use breakdown if available, otherwise use defaults
+    const transportCO2 = breakdown?.transport || 0.0;
+    const electricityCO2 = breakdown?.electricity || 0.0;
+    const foodCO2 = breakdown?.food || 0.0;
+    const wasteCO2 = breakdown?.waste || 0.0;
+    
+    // Prepare new row with actual breakdown values
     const newRow = [
       date,
-      'Mixed',                    // transport_mode
-      '0.6',                      // public_transport_ratio
-      '0.0',                      // transport_co2
-      '0.0',                      // electricity_co2
-      '0.0',                      // cooking_co2
-      '0.0',                      // food_co2
-      '0.0',                      // waste_co2
-      '0.0',                      // digital_co2
-      '0.0',                      // avoided_co2
-      totalCO2.toFixed(2),        // total_co2
+      'Mixed',                         // transport_mode
+      '0.6',                           // public_transport_ratio
+      transportCO2.toFixed(2),         // transport_co2
+      electricityCO2.toFixed(2),       // electricity_co2
+      '0.0',                           // cooking_co2 (can be added to breakdown later)
+      foodCO2.toFixed(2),              // food_co2
+      wasteCO2.toFixed(2),             // waste_co2
+      '0.0',                           // digital_co2 (can be added to breakdown later)
+      '0.0',                           // avoided_co2
+      totalCO2.toFixed(2),             // total_co2
       '1'                         // estimated (1 = ML predicted)
     ].join(',');
     

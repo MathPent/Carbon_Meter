@@ -12,7 +12,7 @@ import joblib
 # ------------------------------------------------------------
 # 1. Load Dataset
 # ------------------------------------------------------------
-df = pd.read_csv("training_data/individual_carbon_emissions_india.csv")
+df = pd.read_csv("data/individual_carbon_emissions_india.csv")
 
 print("Dataset loaded successfully")
 print("Total rows:", len(df))
@@ -142,4 +142,5 @@ print(f"MAE  : {test_mae:.2f} kg CO₂")
 print(f"RMSE : {test_rmse:.2f} kg CO₂")
 print(f"R²   : {test_r2:.4f}")
 
-
+joblib.dump(model, "model.pkl")
+print("✅ Model saved as model.pkl")

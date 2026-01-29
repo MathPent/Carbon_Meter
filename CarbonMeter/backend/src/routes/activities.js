@@ -8,15 +8,20 @@ const Vehicle = require('../models/Vehicle');
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ message: 'No token provided' });
+    console.log('[Auth] No token provided');
+    return res.status(401).json({ success: false, message: 'No token provided' });
   }
   
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.user = decoded; // Contains userId
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    console.log('[Auth] Verifying token with secret:', secret.substring(0, 10) + '...');
+    const decoded = jwt.verify(token, secret);
+    req.user = decoded; // Contains userId as 'id'
+    console.log('[Auth] Token verified for user:', decoded.id);
     next();
   } catch (error) {
-    return res.status(401).json({ message: 'Invalid token' });
+    console.log('[Auth] Token verification failed:', error.message);
+    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
   }
 };
 
@@ -207,8 +212,18 @@ router.get('/user-stats', authMiddleware, async (req, res) => {
     // Extract userId from JWT token (JWT payload has 'id' property)
     const userId = req.user.id;
     
+    // Check if we should include predicted data
+    const includePredicted = req.query.includePredicted === 'true';
+    
+    // Build query filter
+    const query = { userId };
+    if (!includePredicted) {
+      // Exclude ML Predicted activities
+      query.logType = { $ne: 'ML Predicted' };
+    }
+    
     // Get all activities for user
-    const activities = await Activity.find({ userId });
+    const activities = await Activity.find(query);
     
     // Calculate total emissions
     const totalEmissions = activities.reduce((sum, activity) => sum + activity.carbonEmission, 0);
@@ -251,6 +266,7 @@ router.get('/user-stats', authMiddleware, async (req, res) => {
         description: activity.description,
         carbonEmission: activity.carbonEmission,
         date: activity.date,
+        logType: activity.logType, // Include logType to show if it's predicted
       }));
 
     res.json({
@@ -318,7 +334,7 @@ router.get('/history', authMiddleware, async (req, res) => {
 // Get leaderboard (top users by emissions saved)
 router.get('/leaderboard', authMiddleware, async (req, res) => {
   try {
-    const period = req.query.period || 'all'; // all, monthly, weekly
+    const period = req.query.period || 'monthly'; // all, monthly, weekly
     console.log('[Leaderboard] Request received. Period:', period);
     
     let dateFilter = {};
@@ -336,6 +352,10 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
       console.log('[Leaderboard] Weekly filter:', firstDayOfWeek);
     }
 
+    // Count total activities for debugging
+    const totalActivitiesCount = await Activity.countDocuments(dateFilter);
+    console.log(`[Leaderboard] Total activities matching filter: ${totalActivitiesCount}`);
+
     // Aggregate emissions by user
     const leaderboard = await Activity.aggregate([
       { $match: dateFilter },
@@ -351,6 +371,15 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
     ]);
 
     console.log(`[Leaderboard] Found ${leaderboard.length} users in aggregation`);
+
+    if (leaderboard.length === 0) {
+      return res.json({
+        success: true,
+        leaderboard: [],
+        period,
+        message: 'No activities found for this period. Start logging to appear on the leaderboard!'
+      });
+    }
 
     // Populate user details
     const leaderboardWithUsers = await Promise.all(

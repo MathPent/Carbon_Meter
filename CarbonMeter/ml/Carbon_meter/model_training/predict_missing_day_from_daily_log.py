@@ -1,4 +1,3 @@
-
 # ============================================================
 # CarbonMeter - Predict Missing Day from Daily Log (FINAL SAFE)
 # - Handles timestamps like "2026-01-25 00:00:00"
@@ -16,7 +15,7 @@ from datetime import timedelta
 # Paths
 # ------------------------------------------------------------
 MODEL_PATH = "carbonmeter_behavioral_model.pkl"
-CSV_PATH = "manual_calculation/carbonmeter_daily_log.csv"
+CSV_PATH = "calculation_emission/carbonmeter_daily_log.csv"
 
 # ------------------------------------------------------------
 # 1. Load ML model
@@ -147,14 +146,8 @@ X = pd.DataFrame([{
     "fuel_type_Public": fuel_type_Public
 }])
 
-# Align features EXACTLY with model (in the correct order)
-expected_features = [
-    'monthly_electricity_kwh', 'fuel_consumption_liters', 'monthly_travel_km',
-    'public_transport_ratio', 'lpg_cylinders_per_month', 'induction_usage_hours',
-    'solar_water_heater', 'household_size', 'online_orders_per_month',
-    'waste_recycling', 'fuel_type_Petrol', 'fuel_type_Public'
-]
-X = X[expected_features]
+# Align features EXACTLY with model
+X = X[model.get_booster().feature_names]
 
 # ------------------------------------------------------------
 # 5. Predict MONTHLY → DAILY CO2
@@ -228,99 +221,3 @@ print(f"📅 Date      : {missing_date}")
 print(f"🔥 CO₂ Total : {predicted_daily_co2} kg")
 print("✅ CSV updated successfully")
 print("Flag: estimated = 1")
-
-# ============================================================
-# CarbonMeter - Calculated vs Predicted CO₂e Graph
-# ============================================================
-# estimated = 0 → calculated CO₂e (real user input)
-# estimated = 1 → predicted CO₂e (ML)
-# ============================================================
-# ============================================================
-# CarbonMeter - Calculated vs Predicted CO₂e Graph
-# ============================================================
-# estimated = 0 → calculated CO₂e (real user input)
-# estimated = 1 → predicted CO₂e (ML)
-# ============================================================
-
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
-
-# ------------------------------------------------------------
-# 1. Paths
-# ------------------------------------------------------------
-CSV_PATH ="manual_calculation/carbonmeter_daily_log.csv"
-PLOT_DIR = "ploting_graph"
-PLOT_PATH = os.path.join(PLOT_DIR, "calculated_vs_predicted_co2.png")
-
-# Create plots directory if not exists
-os.makedirs(PLOT_DIR, exist_ok=True)
-
-# ------------------------------------------------------------
-# 2. Load CSV
-# ------------------------------------------------------------
-df = pd.read_csv(CSV_PATH)
-
-# Clean column names
-df.columns = df.columns.str.strip().str.lower()
-
-# Required columns check
-required_cols = {"date", "total_co2", "estimated"}
-missing = required_cols - set(df.columns)
-if missing:
-    raise ValueError(f"Missing required columns: {missing}")
-
-# Parse date (DATE ONLY)
-df["date"] = pd.to_datetime(df["date"], errors="coerce").dt.date
-df = df.dropna(subset=["date"])
-
-# Sort by date
-df = df.sort_values("date")
-
-# ------------------------------------------------------------
-# 3. Split calculated vs predicted
-# ------------------------------------------------------------
-calculated_df = df[df["estimated"] == 0]
-predicted_df  = df[df["estimated"] == 1]
-
-if calculated_df.empty:
-    raise ValueError("No calculated CO₂e data (estimated = 0) found.")
-
-if predicted_df.empty:
-    raise ValueError("No predicted CO₂e data (estimated = 1) found.")
-
-# ------------------------------------------------------------
-# 4. Plot graph
-# ------------------------------------------------------------
-plt.figure(figsize=(10, 5))
-
-plt.plot(
-    calculated_df["date"],
-    calculated_df["total_co2"],
-    label="Calculated CO₂e",
-    marker="o"
-)
-
-plt.plot(
-    predicted_df["date"],
-    predicted_df["total_co2"],
-    label="Predicted CO₂e",
-    linestyle="--",
-    marker="x"
-)
-
-plt.xlabel("Date")
-plt.ylabel("CO₂ Emission (kg)")
-plt.title("Calculated vs Predicted Daily CO₂ Emission")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-
-# ------------------------------------------------------------
-# 5. Save plot as image
-# ------------------------------------------------------------
-plt.savefig(PLOT_PATH, dpi=300)
-print(f"✅ Plot saved successfully at: {PLOT_PATH}")
-
-
-

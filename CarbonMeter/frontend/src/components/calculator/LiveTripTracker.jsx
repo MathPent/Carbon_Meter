@@ -18,7 +18,9 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
   const [totalDistance, setTotalDistance] = useState(0);
   const [totalEmission, setTotalEmission] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [gpsStatus, setGpsStatus] = useState('inactive'); // inactive, active, denied, unavailable
+  const [gpsStatus, setGpsStatus] = useState('inactive'); // inactive, active, denied, unavailable, low_precision
+  const [desktopMode, setDesktopMode] = useState(false);
+  const [gpsQuality, setGpsQuality] = useState('🟢 GPS Stable'); // UI feedback
 
   // Trip data
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -29,6 +31,10 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
   const lastPositionRef = useRef(null);
   const startTimeRef = useRef(null);
   const timerIntervalRef = useRef(null);
+  const lastUpdateTimeRef = useRef(0); // Throttle GPS updates
+  const consecutiveGoodUpdatesRef = useRef(0); // Track GPS reliability
+  const trackingStartTimeRef = useRef(null); // For desktop mode detection
+  const initialPositionLockedRef = useRef(false); // Lock first valid position
 
   // Fetch vehicles on mount
   useEffect(() => {
@@ -122,8 +128,13 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
     setTotalEmission(0);
     setDuration(0);
     lastPositionRef.current = null;
+    initialPositionLockedRef.current = false; // Reset position lock
+    trackingStartTimeRef.current = Date.now(); // Start desktop mode timer
+    setDesktopMode(false);
+    setGpsQuality('🟢 GPS Stable');
+    consecutiveGoodUpdatesRef.current = 0;
 
-    // Watch position
+    // 6️⃣ IMPROVED WATCH POSITION OPTIONS
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         handlePositionUpdate(position);
@@ -133,40 +144,70 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0,
-        distanceFilter: 10 // Only update when moved 10+ meters
+        maximumAge: 10000, // Accept cached positions up to 10 seconds old
+        timeout: 15000 // 15 second timeout
       }
     );
   };
 
-  // Handle GPS position updates
+  // Handle GPS position updates with stability fixes
   const handlePositionUpdate = (position) => {
+    // Throttle updates to once per second
+    const now = Date.now();
+    if (now - lastUpdateTimeRef.current < 1000) {
+      return;
+    }
+    lastUpdateTimeRef.current = now;
+
     console.log('📍 GPS Update:', {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
-      accuracy: position.coords.accuracy
+      lat: position.coords.latitude.toFixed(6),
+      lng: position.coords.longitude.toFixed(6),
+      accuracy: Math.round(position.coords.accuracy) + 'm'
     });
 
     const currentPosition = {
       lat: position.coords.latitude,
       lng: position.coords.longitude,
-      accuracy: position.coords.accuracy
+      accuracy: position.coords.accuracy,
+      timestamp: now
     };
 
-    // Ignore positions with poor accuracy (> 50 meters)
-    if (currentPosition.accuracy > 50) {
-      console.log('⚠️ Poor GPS accuracy, ignoring position');
+    // 🔒 1️⃣ ACCURACY FILTERING (Adaptive threshold)
+    // Mobile/Good GPS: 100m threshold
+    // Desktop Mode: 500m threshold (laptops have poor GPS)
+    const accuracyThreshold = desktopMode ? 500 : 100;
+    
+    if (currentPosition.accuracy > accuracyThreshold && !desktopMode) {
+      console.log('⚠️ Poor accuracy, ignoring GPS update:', Math.round(currentPosition.accuracy) + 'm');
+      setGpsQuality('🟡 Low Precision Mode');
+      
+      // 5️⃣ DESKTOP MODE: Enter low-precision mode after 5 seconds (fast trigger for laptops)
+      if (trackingStartTimeRef.current && (now - trackingStartTimeRef.current) > 5000) {
+        console.log('🖥️ Entering Desktop/Laptop Safe Mode (Accuracy: ' + Math.round(currentPosition.accuracy) + 'm)');
+        setDesktopMode(true);
+        setGpsStatus('low_precision');
+        setGpsQuality('🟡 Low Precision Mode (Desktop)');
+        // Continue processing this update in desktop mode
+      } else {
+        return; // Wait for desktop mode
+      }
+    } else if (currentPosition.accuracy <= 100) {
+      setGpsQuality('🟢 GPS Stable');
+    } else if (desktopMode) {
+      setGpsQuality('🟡 Low Precision Mode (Desktop)');
+    }
+
+    // 3️⃣ LOCK INITIAL POSITION (Never overwrite first valid point)
+    if (!lastPositionRef.current && !initialPositionLockedRef.current) {
+      lastPositionRef.current = currentPosition;
+      initialPositionLockedRef.current = true;
+      trackingStartTimeRef.current = now;
+      setGpsStatus('active');
+      console.log('✅ Initial position LOCKED');
       return;
     }
 
-    // If this is the first position, just store it
-    if (!lastPositionRef.current) {
-      lastPositionRef.current = currentPosition;
-      setGpsStatus('active');
-      console.log('✅ Initial position set');
-      return;
-    }
+    if (!lastPositionRef.current) return;
 
     // Calculate distance from last position
     const distance = calculateDistance(
@@ -176,61 +217,124 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
       currentPosition.lng
     );
 
-    console.log('📏 Distance calculated:', distance, 'km');
+    console.log('📏 Distance calculated:', (distance * 1000).toFixed(1), 'meters');
 
-    // Ignore movements less than 20 meters (GPS noise)
-    // 0.02 km = 20 meters
-    if (distance < 0.02) {
-      console.log('⚠️ Movement too small, ignoring (GPS noise)');
+    // 2️⃣ DISTANCE VALIDATION BEFORE ADDING
+    // Mobile: max 0.2 km (200m) per update
+    // Desktop: max 0.5 km (500m) per update (more lenient for GPS jumps)
+    const maxDistancePerUpdate = desktopMode ? 0.5 : 0.2;
+    if (distance > maxDistancePerUpdate) {
+      console.log('⚠️ Unrealistic GPS jump detected, skipping update:', (distance * 1000).toFixed(0) + 'm');
+      setGpsQuality('🔴 GPS Lost (retrying)');
       return;
     }
 
-    // Ignore unrealistic speeds (> 200 km/h)
-    const timeDiff = (Date.now() - (lastPositionRef.current.timestamp || Date.now())) / 1000 / 3600; // hours
+    // Calculate speed for validation
+    const timeDiff = (now - (lastPositionRef.current.timestamp || now)) / 1000 / 3600; // hours
     if (timeDiff > 0) {
       const speed = distance / timeDiff; // km/h
-      if (speed > 200) {
-        console.log('⚠️ Unrealistic speed detected, ignoring:', speed, 'km/h');
+      
+      // 2️⃣ SPEED VALIDATION
+      // Mobile: max 150 km/h
+      // Desktop: max 200 km/h (more lenient for GPS inaccuracy)
+      const maxSpeed = desktopMode ? 200 : 150;
+      if (speed > maxSpeed) {
+        console.log('⚠️ Unrealistic speed detected, skipping update:', Math.round(speed) + ' km/h');
+        setGpsQuality('🔴 GPS Lost (retrying)');
         return;
+      }
+      
+      if (speed > 1) {
+        console.log('🚄 Current speed:', Math.round(speed), 'km/h');
       }
     }
 
-    console.log('✅ Valid movement detected:', distance, 'km');
+    // 4️⃣ SMOOTH DISTANCE ACCUMULATION
+    // Mobile: accuracy ≤ 100m, distance ≥ 10m
+    // Desktop: accuracy ≤ 500m, distance ≥ 5m (more sensitive for laptops)
+    const meetsAccuracyRequirement = currentPosition.accuracy <= accuracyThreshold;
+    const minimumMovement = desktopMode ? 0.005 : 0.01; // 5m for desktop, 10m for mobile
+    const meetsDistanceRequirement = distance >= minimumMovement;
 
-    // Update total distance
+    if (!meetsAccuracyRequirement) {
+      console.log('⚠️ Accuracy too poor (' + Math.round(currentPosition.accuracy) + 'm), waiting for better signal');
+      return;
+    }
+
+    if (!meetsDistanceRequirement) {
+      console.log('⚠️ Movement too small (' + (distance * 1000).toFixed(1) + 'm), ignoring GPS noise');
+      return;
+    }
+
+    // Track consecutive good updates
+    consecutiveGoodUpdatesRef.current++;
+    console.log('✅ Valid movement detected:', (distance * 1000).toFixed(1), 'meters');
+    setGpsQuality('🟢 GPS Stable');
+
+    // Update total distance and emissions
     setTotalDistance((prev) => {
       const newDistance = prev + distance;
+      console.log('📊 Total distance updated:', newDistance.toFixed(3), 'km');
       
-      // Calculate emission based on new distance
+      // Calculate emission in real-time
       if (selectedVehicle) {
-        const emission = newDistance * selectedVehicle.co2_per_km;
+        let emission;
+        
+        // Method 1: Direct CO2 per km (preferred)
+        if (selectedVehicle.co2_per_km) {
+          emission = newDistance * selectedVehicle.co2_per_km;
+          console.log('💨 Emission (direct):', emission.toFixed(3), 'kg CO₂');
+        } 
+        // Method 2: Calculate from mileage and emission factor
+        else if (selectedVehicle.mileage && selectedVehicle.co2_factor) {
+          const fuelUsed = newDistance / selectedVehicle.mileage; // liters
+          emission = fuelUsed * selectedVehicle.co2_factor;
+          console.log('💨 Emission (calculated):', emission.toFixed(3), 'kg CO₂');
+        }
+        // Method 3: Fallback for diesel
+        else if (selectedVehicle.fuel === 'Diesel' && selectedVehicle.mileage) {
+          const fuelUsed = newDistance / selectedVehicle.mileage;
+          emission = fuelUsed * 2.68; // Diesel emission factor
+          console.log('💨 Emission (diesel fallback):', emission.toFixed(3), 'kg CO₂');
+        } else {
+          emission = newDistance * 0.15; // Generic fallback
+          console.log('💨 Emission (generic fallback):', emission.toFixed(3), 'kg CO₂');
+        }
+        
         setTotalEmission(emission);
       }
 
       return newDistance;
     });
 
-    // Update last position with timestamp
-    lastPositionRef.current = {
-      ...currentPosition,
-      timestamp: Date.now()
-    };
+    // Update last position for next calculation
+    lastPositionRef.current = currentPosition;
+    console.log('🔄 Position reference updated - ready for next measurement');
   };
 
-  // Handle GPS errors
+  // 7️⃣ HANDLE GPS ERRORS WITHOUT RESETTING DISTANCE
   const handlePositionError = (error) => {
     console.error('GPS Error:', error);
     
     if (error.code === 1) {
+      // PERMISSION_DENIED
       setGpsStatus('denied');
+      setGpsQuality('🔴 GPS Denied');
       alert('Location permission denied. Please enable location access to track your trip.');
       stopTrip();
     } else if (error.code === 2) {
+      // POSITION_UNAVAILABLE
       setGpsStatus('unavailable');
-      alert('Location information unavailable. Please check your GPS settings.');
+      setGpsQuality('🔴 GPS Unavailable');
+      console.log('⚠️ Location information unavailable, retrying...');
+      // Don't stop tracking, let it retry
     } else if (error.code === 3) {
-      // Timeout - just log it, don't stop tracking
-      console.log('GPS timeout - will retry');
+      // TIMEOUT - Retry silently, do NOT reset distance
+      console.log('⚠️ GPS timeout - will retry silently');
+      setGpsQuality('🟡 GPS Timeout (retrying)');
+      // Do NOT stop tracking
+      // Do NOT reset distance
+      // Just wait for next update
     }
   };
 
@@ -270,29 +374,60 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
   // Save trip to database
   const handleSaveTrip = async () => {
     setSaving(true);
-    try {
-      const tripData = {
-        vehicleId: selectedVehicle._id,
-        vehicleModel: selectedVehicle.model,
-        category: selectedVehicle.category,
-        fuel: selectedVehicle.fuel,
-        distance: Math.round(totalDistance * 100) / 100,
-        carbonEmission: Math.round(totalEmission * 1000) / 1000,
-        duration: formatDuration(duration)
-      };
+    
+    const tripData = {
+      vehicleId: selectedVehicle._id,
+      vehicleModel: selectedVehicle.model,
+      category: selectedVehicle.category,
+      fuel: selectedVehicle.fuel,
+      distance: Math.round(totalDistance * 1000) / 1000, // 3 decimal precision
+      carbonEmission: Math.round(totalEmission * 1000) / 1000,
+      duration: formatDuration(duration)
+    };
 
+    console.log('💾 Saving trip:', tripData);
+
+    try {
       const response = await api.post('/live-transport/live-transport', tripData);
 
       if (response.data.success) {
-        alert('✅ Trip saved successfully! View it in Dashboard → Log Activity');
-        // Navigate to dashboard after short delay
+        console.log('✅ Trip saved to database:', response.data.data);
+        alert(`✅ Trip saved successfully!\n\nDistance: ${tripData.distance.toFixed(2)} km\nEmissions: ${tripData.carbonEmission.toFixed(3)} kg CO₂\n\nView it in Dashboard → Log Activity`);
+        
+        // Reset and navigate
+        resetTrip();
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 1000);
+        }, 500);
       }
     } catch (error) {
-      console.error('Error saving trip:', error);
-      alert('Failed to save trip. Please try again.');
+      console.error('❌ Error saving trip:', error);
+      
+      // Show user-friendly error with option to retry
+      const errorMsg = error.response?.data?.message || 'Failed to save trip to server';
+      const retry = window.confirm(
+        `⚠️ ${errorMsg}\n\nYour trip data:\n` +
+        `Distance: ${tripData.distance.toFixed(2)} km\n` +
+        `Emissions: ${tripData.carbonEmission.toFixed(3)} kg CO₂\n` +
+        `Duration: ${tripData.duration}\n\n` +
+        `Would you like to retry saving?`
+      );
+      
+      if (retry) {
+        // Retry save
+        setSaving(false);
+        handleSaveTrip();
+        return;
+      } else {
+        // User chose not to retry - show data for manual logging
+        alert(
+          `Trip data (for manual entry if needed):\n\n` +
+          `Vehicle: ${tripData.vehicleModel}\n` +
+          `Distance: ${tripData.distance.toFixed(2)} km\n` +
+          `Emissions: ${tripData.carbonEmission.toFixed(3)} kg CO₂\n` +
+          `Duration: ${tripData.duration}`
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -508,12 +643,18 @@ const LiveTripTracker = ({ onBack, onComplete }) => {
             {gpsStatus === 'inactive' && 'GPS Inactive'}
             {gpsStatus === 'denied' && 'GPS Permission Denied'}
             {gpsStatus === 'unavailable' && 'GPS Unavailable'}
+            {gpsStatus === 'low_precision' && 'GPS Active (Low Precision Mode)'}
           </span>
         </div>
         {isTracking && (
-          <div className="tracking-note">
-            📍 Distance updates continuously - even small movements are tracked
-          </div>
+          <>
+            <div className="gps-quality-badge">
+              {gpsQuality}
+            </div>
+            <div className="tracking-note">
+              📍 Distance updates continuously - even small movements are tracked
+            </div>
+          </>
         )}
       </div>
 

@@ -63,4 +63,17 @@ api.interceptors.request.use(
   }
 );
 
+// Prediction API
+export const predictionAPI = {
+  // Get missing days in last 30 days
+  getMissingDays: () => api.get('/prediction/missing-days'),
+  
+  // Predict emission for a specific missing day
+  predictMissingDay: (date) => api.post('/prediction/predict-missing-day', { date }),
+  
+  // Confirm and save prediction
+  confirmPrediction: (data) => api.post('/prediction/confirm', data),
+};
+
+// Export api instance as default for backward compatibility
 export default api;

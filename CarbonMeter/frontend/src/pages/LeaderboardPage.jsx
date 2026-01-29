@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './LeaderboardPage.css';
 
 const LeaderboardPage = () => {
   const [leaderboard, setLeaderboard] = useState([]);
   const [period, setPeriod] = useState('monthly'); // all, monthly, weekly
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchLeaderboard();
@@ -13,9 +16,20 @@ const LeaderboardPage = () => {
 
   const fetchLeaderboard = async () => {
     setLoading(true);
+    setError('');
     try {
-      const token = localStorage.getItem('token');
+      // Try both token keys for compatibility
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Please log in to view the leaderboard');
+        navigate('/auth');
+        return;
+      }
+      
       console.log('Fetching leaderboard with period:', period);
+      console.log('Using token:', token.substring(0, 20) + '...');
+      
       const response = await axios.get(`http://localhost:5000/api/activities/leaderboard?period=${period}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -24,11 +38,20 @@ const LeaderboardPage = () => {
 
       console.log('Leaderboard response:', response.data);
       if (response.data.success) {
-        setLeaderboard(response.data.leaderboard);
+        setLeaderboard(response.data.leaderboard || []);
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       console.error('Error details:', error.response?.data);
+      
+      if (error.response?.status === 401) {
+        setError('Session expired. Please log in again.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('authToken');
+        setTimeout(() => navigate('/auth'), 2000);
+      } else {
+        setError(error.response?.data?.message || 'Failed to load leaderboard');
+      }
     } finally {
       setLoading(false);
     }
@@ -78,6 +101,24 @@ const LeaderboardPage = () => {
             All Time
           </button>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="error-message" style={{
+            background: '#fee2e2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            padding: '12px 16px',
+            marginBottom: '20px',
+            color: '#991b1b',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span>⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         {/* Leaderboard Table */}
         {loading ? (

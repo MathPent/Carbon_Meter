@@ -24,12 +24,16 @@ const DashboardPage = () => {
 
   useEffect(() => {
     fetchDashboardStats();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, includePredicted]);
 
   const fetchDashboardStats = async () => {
     try {
       // Fetch user statistics from correct endpoint
-      const statsResponse = await api.get('/activities/user-stats');
+      const statsResponse = await api.get('/activities/user-stats', {
+        params: {
+          includePredicted: includePredicted
+        }
+      });
       const data = statsResponse.data;
 
       if (data.success) {

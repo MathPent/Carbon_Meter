@@ -83,4 +83,13 @@ router.post('/carbon-credits/use', auth, orgController.useCarbonCredits);
  */
 router.get('/comparison', auth, orgController.getIndustryComparison);
 
+/**
+ * Organization Compare (Benchmarking & Leaderboard)
+ */
+router.get('/compare/leaderboard', auth, orgController.getOrgLeaderboard);
+router.get('/compare/peers', auth, orgController.getPeerComparison);
+router.get('/compare/benchmarks', auth, orgController.getSectorBenchmarks);
+router.get('/compare/percentile', auth, orgController.getSectorPercentile);
+router.get('/compare/best-practices', auth, orgController.getBestPractices);
+
 module.exports = router;
