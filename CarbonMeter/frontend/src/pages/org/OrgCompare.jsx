@@ -9,11 +9,13 @@ const OrgCompare = () => {
   const [benchmarks, setBenchmarks] = useState(null);
   const [percentile, setPercentile] = useState(null);
   const [practices, setPractices] = useState(null);
+  const [prediction, setPrediction] = useState(null);
+  const [dataSource, setDataSource] = useState('real'); // 'real' or 'predicted'
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchAllCompareData();
-  }, []);
+  }, [dataSource]);
 
   const fetchAllCompareData = async () => {
     try {
@@ -24,11 +26,11 @@ const OrgCompare = () => {
         'Content-Type': 'application/json',
       };
 
-      // Fetch all 5 endpoints in parallel
+      // Fetch all endpoints in parallel (updated to /api/org/*)
       const [leaderboardRes, peersRes, benchmarksRes, percentileRes, practicesRes] = await Promise.all([
         fetch('http://localhost:5000/api/organization/leaderboard', { headers }),
-        fetch('http://localhost:5000/api/organization/compare/peers', { headers }),
-        fetch('http://localhost:5000/api/organization/benchmarks', { headers }),
+        fetch('http://localhost:5000/api/org/peers', { headers }),
+        fetch('http://localhost:5000/api/org/benchmarks', { headers }),
         fetch('http://localhost:5000/api/organization/compare/percentile', { headers }),
         fetch('http://localhost:5000/api/organization/best-practices', { headers }),
       ]);
@@ -44,11 +46,39 @@ const OrgCompare = () => {
       setBenchmarks(benchmarksData);
       setPercentile(percentileData);
       setPractices(practicesData);
+
+      // Fetch ML prediction if in predicted mode
+      if (dataSource === 'predicted') {
+        await fetchPrediction(headers);
+      }
     } catch (err) {
       console.error('Error fetching compare data:', err);
       setError('Failed to load comparison data. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPrediction = async (headers) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/org/prediction', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          period: 'next-month', // Can be 'next-month', 'next-quarter', 'next-year'
+        }),
+      });
+
+      if (response.ok) {
+        const predictionData = await response.json();
+        setPrediction(predictionData);
+      } else {
+        console.error('Prediction API failed:', response.status);
+        setPrediction(null);
+      }
+    } catch (err) {
+      console.error('Error fetching prediction:', err);
+      setPrediction(null);
     }
   };
 
@@ -88,6 +118,23 @@ const OrgCompare = () => {
       <div className="compare-header">
         <h1>Industry Comparison</h1>
         <p>Compare your emissions with industry peers and benchmarks</p>
+
+        {/* ✅ Data Source Toggle */}
+        <div className="data-source-toggle">
+          <button
+            className={`toggle-btn ${dataSource === 'real' ? 'active' : ''}`}
+            onClick={() => setDataSource('real')}
+          >
+            📊 Real Data
+          </button>
+          <button
+            className={`toggle-btn ${dataSource === 'predicted' ? 'active' : ''}`}
+            onClick={() => setDataSource('predicted')}
+          >
+            🤖 AI Predicted
+          </button>
+        </div>
+
         {/* ✅ Show demo badge only when any API returns demo:true */}
         {(leaderboard?.demo || peers?.demo || benchmarks?.demo || percentile?.demo || practices?.demo) && (
           <div className="demo-badge">
@@ -98,6 +145,11 @@ const OrgCompare = () => {
       </div>
 
       <div className="compare-content">
+        {/* ✅ ML Prediction Card (only in predicted mode) */}
+        {dataSource === 'predicted' && prediction && (
+          <PredictionCard data={prediction} />
+        )}
+
         {/* 4. Performance Percentile - Top Priority */}
         <PercentileCard data={percentile} />
 
@@ -112,6 +164,58 @@ const OrgCompare = () => {
 
         {/* 5. Best Practices */}
         <BestPracticesCard data={practices} />
+      </div>
+    </div>
+  );
+};
+
+// ML Prediction Card Component
+const PredictionCard = ({ data }) => {
+  if (!data || !data.prediction) {
+    return null;
+  }
+
+  const { prediction, organizationId, period } = data;
+  const { predicted_emission, trend, confidence, benchmark_percentile, source } = prediction;
+
+  const trendIcon = trend === 'increasing' ? '📈' : trend === 'decreasing' ? '📉' : '➡️';
+  const trendColor = trend === 'increasing' ? '#ef4444' : trend === 'decreasing' ? '#10b981' : '#f59e0b';
+
+  return (
+    <div className="compare-card prediction-card">
+      <h2>🤖 AI-Powered Emission Prediction</h2>
+      <p className="card-subtitle">Forecast for {period} • {source === 'ml' ? 'ML Model' : 'Statistical Estimate'}</p>
+
+      <div className="prediction-content">
+        <div className="prediction-main">
+          <div className="prediction-value">
+            <span className="value-label">Predicted Emission</span>
+            <span className="value-number">{predicted_emission?.toFixed(2) || 0} tCO₂e</span>
+          </div>
+
+          <div className="prediction-trend" style={{ color: trendColor }}>
+            <span className="trend-icon">{trendIcon}</span>
+            <span className="trend-text">{trend || 'stable'} trend</span>
+          </div>
+        </div>
+
+        <div className="prediction-stats">
+          <div className="stat-item">
+            <span className="stat-label">Confidence</span>
+            <span className="stat-value">{confidence ? `${(confidence * 100).toFixed(0)}%` : 'N/A'}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-label">Benchmark Percentile</span>
+            <span className="stat-value">{benchmark_percentile ? `${benchmark_percentile}%` : 'N/A'}</span>
+          </div>
+        </div>
+
+        <div className="prediction-disclaimer">
+          <span className="disclaimer-icon">ℹ️</span>
+          <span className="disclaimer-text">
+            Predictions are based on {source === 'ml' ? 'XGBoost ML model trained on industry data' : 'historical emission patterns and statistical analysis'}
+          </span>
+        </div>
       </div>
     </div>
   );

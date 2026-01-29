@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import './Navbar.css';
+import logo from '../assets/logos/logo.jpeg';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -27,7 +28,11 @@ const Navbar = () => {
       <div className="navbar-container">
         {/* Logo */}
         <Link to="/" className="navbar-logo">
-          🌍 CarbonMeter
+          <div className="logo-wrapper">
+            <div className="energy-ring"></div>
+            <img src={logo} alt="CarbonMeter Logo" className="navbar-logo-img" />
+          </div>
+          <span>CarbonMeter</span>
         </Link>
 
         {/* Navigation Links */}

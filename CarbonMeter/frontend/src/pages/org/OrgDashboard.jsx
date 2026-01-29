@@ -16,9 +16,14 @@ const OrgDashboard = () => {
     lastUpdated: null,
   });
   const [loading, setLoading] = useState(true);
+  const [prediction, setPrediction] = useState(null);
+  const [missingData, setMissingData] = useState([]);
+  const [showPrediction, setShowPrediction] = useState(false);
+  const [predicting, setPredicting] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
+    checkMissingData();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -41,6 +46,131 @@ const OrgDashboard = () => {
       console.error('Error fetching org dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkMissingData = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/org/missing-data', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMissingData(data.missingDays || []);
+      }
+    } catch (error) {
+      console.error('Error checking missing data:', error);
+    }
+  };
+
+  const generatePrediction = async (period = 'next_30_days') => {
+    try {
+      setPredicting(true);
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      
+      // Get user info for organization details
+      const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+      const industry = userInfo.industry || 'Manufacturing';
+      
+      const response = await fetch('http://localhost:5000/api/org/predict', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          period: period,
+          industry: industry,
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPrediction(data.prediction);
+        setShowPrediction(true);
+        
+        // Show success message
+        if (data.fallback) {
+          alert('⚠️ Prediction generated using fallback calculation (ML service unavailable)');
+        } else if (data.cached) {
+          alert('ℹ️ Showing cached prediction (ML service unavailable)');
+        } else {
+          alert('✅ Prediction generated successfully!');
+        }
+      } else {
+        const error = await response.json();
+        alert('Failed to generate prediction: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error generating prediction:', error);
+      alert('Error generating prediction. Please try again.');
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  const savePredictionToDashboard = async () => {
+    if (!prediction) {
+      alert('No prediction to save!');
+      return;
+    }
+
+    try {
+      setPredicting(true);
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      
+      const response = await fetch('http://localhost:5000/api/org/save-prediction', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(prediction),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        alert('✅ Prediction saved successfully to dashboard and CSV!');
+        await fetchDashboardData(); // Refresh dashboard
+      } else {
+        const error = await response.json();
+        alert('Failed to save prediction: ' + (error.message || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error saving prediction:', error);
+      alert('Error saving prediction. Please try again.');
+    } finally {
+      setPredicting(false);
+    }
+  };
+
+  const fillMissingData = async () => {
+    try {
+      setPredicting(true);
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/org/fill-missing', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        await fetchDashboardData();
+        await checkMissingData();
+        alert('Missing data filled successfully with ML predictions!');
+      }
+    } catch (error) {
+      console.error('Error filling missing data:', error);
+      alert('Failed to fill missing data');
+    } finally {
+      setPredicting(false);
     }
   };
 
@@ -73,6 +203,193 @@ const OrgDashboard = () => {
         <Link to="/org/calculate" className="btn-calculate">
           <span>🧮</span> Calculate New Emissions
         </Link>
+      </div>
+
+      {/* AI Prediction Widget - New Feature */}
+      {missingData.length > 0 && (
+        <div className="prediction-alert">
+          <div className="alert-header">
+            <span className="alert-icon">🤖</span>
+            <div className="alert-content">
+              <h3>Missing Emission Data Detected</h3>
+              <p>You have {missingData.length} day(s) without recorded emissions. Use AI to predict and fill gaps.</p>
+            </div>
+          </div>
+          <button 
+            onClick={fillMissingData} 
+            className="btn-predict"
+            disabled={predicting}
+          >
+            {predicting ? '⏳ Predicting...' : '🤖 Fill Missing Data with AI'}
+          </button>
+        </div>
+      )}
+
+      {/* ML Prediction Card */}
+      <div className="prediction-section">
+        <div className="prediction-header">
+          <div>
+            <h2>🔮 AI Emission Forecasting</h2>
+            <p className="section-subtitle">
+              ML-powered predictions for manufacturing & industrial operations
+            </p>
+          </div>
+          <button 
+            onClick={() => setShowPrediction(!showPrediction)} 
+            className="btn-toggle-prediction"
+          >
+            {showPrediction ? '👁️ Hide Prediction' : '🤖 Show Prediction'}
+          </button>
+        </div>
+
+        {showPrediction && (
+          <div className="prediction-widget">
+            {!prediction ? (
+              <div className="prediction-empty">
+                <div className="empty-icon">🎯</div>
+                <h3>Generate Emission Forecast</h3>
+                <p>Use our XGBoost ML model to predict future emissions based on your historical data and industry patterns.</p>
+                <div className="prediction-options">
+                  <button onClick={() => generatePrediction('next_30_days')} disabled={predicting} className="btn-predict-option">
+                    {predicting ? '⏳ Processing...' : '📅 Next 30 Days'}
+                  </button>
+                  <button onClick={() => generatePrediction('next_90_days')} disabled={predicting} className="btn-predict-option">
+                    {predicting ? '⏳ Processing...' : '📊 Next Quarter'}
+                  </button>
+                  <button onClick={() => generatePrediction('next_365_days')} disabled={predicting} className="btn-predict-option">
+                    {predicting ? '⏳ Processing...' : '📈 Next Year'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="prediction-results">
+                <div className="prediction-main-card">
+                  <div className="prediction-value-section">
+                    <div className="prediction-label">Predicted Emission</div>
+                    <div className="prediction-value-large">
+                      {prediction.predictedEmission?.toFixed(2) || 0}
+                      <span className="unit">tCO₂e</span>
+                    </div>
+                    <div className="prediction-period">for {prediction.period}</div>
+                    {prediction.isFallback && (
+                      <div className="fallback-badge">⚠️ Fallback Calculation</div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="prediction-stats-grid">
+                  <div className="stat-card">
+                    <div className="stat-icon">🎯</div>
+                    <div className="stat-content">
+                      <div className="stat-label">Confidence Level</div>
+                      <div className="stat-value">
+                        {prediction.confidence 
+                          ? `${(prediction.confidence * 100).toFixed(0)}%` 
+                          : 'N/A'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="stat-icon">🏭</div>
+                    <div className="stat-content">
+                      <div className="stat-label">Industry</div>
+                      <div className="stat-value">{prediction.industry || 'Manufacturing'}</div>
+                    </div>
+                  </div>
+
+                  <div className="stat-card">
+                    <div className="stat-icon">⚙️</div>
+                    <div className="stat-content">
+                      <div className="stat-label">Model Source</div>
+                      <div className="stat-value">{prediction.isFallback ? 'Fallback' : 'XGBoost ML'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scope Breakdown */}
+                {prediction.breakdown && (
+                  <div className="scope-breakdown">
+                    <h4>Emission Breakdown</h4>
+                    <div className="breakdown-bars">
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Scope 1 ({prediction.breakdown.scope1_percentage}%)</span>
+                        <div className="breakdown-bar">
+                          <div 
+                            className="breakdown-fill scope1" 
+                            style={{ width: `${prediction.breakdown.scope1_percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="breakdown-value">{prediction.breakdown.scope1_emission?.toFixed(2)} tCO₂e</span>
+                      </div>
+                      <div className="breakdown-item">
+                        <span className="breakdown-label">Scope 2 ({prediction.breakdown.scope2_percentage}%)</span>
+                        <div className="breakdown-bar">
+                          <div 
+                            className="breakdown-fill scope2" 
+                            style={{ width: `${prediction.breakdown.scope2_percentage}%` }}
+                          ></div>
+                        </div>
+                        <span className="breakdown-value">{prediction.breakdown.scope2_emission?.toFixed(2)} tCO₂e</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {prediction.recommendations && prediction.recommendations.length > 0 && (
+                  <div className="recommendations-section">
+                    <h4>🎯 AI Recommendations</h4>
+                    <ul className="recommendations-list">
+                      {prediction.recommendations.map((rec, idx) => (
+                        <li key={idx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Industry Insights */}
+                {prediction.industryInsights && (
+                  <div className="industry-insights">
+                    <h4>🏭 Industry Insights</h4>
+                    <div className="insights-grid">
+                      <div className="insight-item">
+                        <span className="insight-label">Main Source:</span>
+                        <span className="insight-value">{prediction.industryInsights.main_source}</span>
+                      </div>
+                      <div className="insight-item">
+                        <span className="insight-label">Percentage:</span>
+                        <span className="insight-value">{prediction.industryInsights.percentage}</span>
+                      </div>
+                      <div className="insight-item">
+                        <span className="insight-label">Reduction Potential:</span>
+                        <span className="insight-value">{prediction.industryInsights.reduction_potential}</span>
+                      </div>
+                      <div className="insight-item">
+                        <span className="insight-label">Benchmark:</span>
+                        <span className="insight-value">{prediction.industryInsights.benchmark}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="prediction-actions">
+                  <button 
+                    onClick={savePredictionToDashboard} 
+                    className="btn-save-prediction"
+                    disabled={predicting}
+                  >
+                    {predicting ? '⏳ Saving...' : '💾 Save to Dashboard'}
+                  </button>
+                  <button onClick={() => setPrediction(null)} className="btn-regenerate">
+                    🔄 Generate New Prediction
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       {/* Main Metrics */}

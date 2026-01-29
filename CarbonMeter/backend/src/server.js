@@ -22,6 +22,7 @@ const startServer = async () => {
   app.use('/api/admin', require('./routes/admin'));
   app.use('/api/gov', require('./routes/gov'));
   app.use('/api/org', require('./routes/org'));
+  app.use('/api/org', require('./routes/orgPrediction')); // AI Prediction routes
   app.use('/api/organization', require('./routes/organization'));
   app.use('/api/map', require('./routes/map'));
   app.use('/api/vehicles', require('./routes/vehicles'));

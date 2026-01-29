@@ -12,6 +12,11 @@ const orgActivitySchema = new mongoose.Schema({
     required: true,
     index: true,
   },
+  organizationId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    index: true,
+  },
   organizationName: {
     type: String,
   },
@@ -101,7 +106,27 @@ const orgActivitySchema = new mongoose.Schema({
     required: true,
     default: 0,
   },
+  scope1Emissions: {
+    type: Number,
+    default: 0,
+  },
+  scope2Emissions: {
+    type: Number,
+    default: 0,
+  },
+  scope3Emissions: {
+    type: Number,
+    default: 0,
+  },
+  totalEmissions: {
+    type: Number,
+    default: 0,
+  },
   emissionUnit: {
+    type: String,
+    default: 'tCO2e',
+  },
+  unit: {
     type: String,
     default: 'tCO2e',
   },
@@ -143,7 +168,15 @@ const orgActivitySchema = new mongoose.Schema({
   // Metadata
   calculationMethod: String,
   dataSource: String,
+  source: String,
+  activityType: String,
+  description: String,
   notes: String,
+  isPrediction: {
+    type: Boolean,
+    default: false,
+  },
+  predictionConfidence: Number,
   
   createdAt: {
     type: Date,
@@ -160,8 +193,10 @@ const orgActivitySchema = new mongoose.Schema({
 
 // Indexes for efficient queries
 orgActivitySchema.index({ userId: 1, activityDate: -1 });
+orgActivitySchema.index({ organizationId: 1, activityDate: -1 });
 orgActivitySchema.index({ userId: 1, scope: 1 });
 orgActivitySchema.index({ userId: 1, category: 1 });
+orgActivitySchema.index({ organizationId: 1, scope: 1 });
 orgActivitySchema.index({ createdAt: -1 });
 
 // Virtual for emission intensity

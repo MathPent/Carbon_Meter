@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import './GovNavbar.css';
+import logo from '../../assets/logos/logo.jpeg';
 
 const GovNavbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -34,7 +35,10 @@ const GovNavbar = () => {
         {/* Left Section - Logo & Brand */}
         <div className="gov-navbar-brand">
           <div className="gov-logo">
-            <span className="gov-emblem">🏛️</span>
+            <div className="logo-wrapper">
+              <div className="energy-ring"></div>
+              <img src={logo} alt="CarbonMeter Logo" className="navbar-logo-img" />
+            </div>
             <div className="gov-brand-text">
               <h1>CarbonMeter</h1>
               <p>Government Portal</p>

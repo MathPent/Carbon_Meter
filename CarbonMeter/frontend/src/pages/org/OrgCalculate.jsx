@@ -194,23 +194,38 @@ const OrgCalculate = () => {
   const saveCalculation = async () => {
     setIsSaving(true);
     try {
-      await api.post('/activities/org-emission', {
-        timePeriod: formData.timePeriod,
-        startDate: formData.startDate,
-        endDate: formData.endDate,
-        scope1: calculationResult.scope1,
-        scope2: calculationResult.scope2,
-        scope3: calculationResult.scope3,
-        totalEmissions: calculationResult.total,
-        perEmployee: calculationResult.perEmployee,
-        perRevenue: calculationResult.perRevenue,
-        rawData: formData,
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/org/save-calculation', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          timePeriod: formData.timePeriod,
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+          scope1: calculationResult.scope1,
+          scope2: calculationResult.scope2,
+          scope3: calculationResult.scope3,
+          totalEmissions: calculationResult.total,
+          perEmployee: calculationResult.perEmployee,
+          perRevenue: calculationResult.perRevenue,
+          rawData: formData,
+        }),
       });
-      alert('Calculation saved successfully!');
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save calculation');
+      }
+
+      const data = await response.json();
+      alert('✅ Calculation saved successfully! Redirecting to dashboard...');
       navigate('/org/dashboard');
     } catch (error) {
       console.error('Error saving calculation:', error);
-      alert('Failed to save calculation. Please try again.');
+      alert(`❌ Failed to save calculation: ${error.message}`);
     } finally {
       setIsSaving(false);
     }

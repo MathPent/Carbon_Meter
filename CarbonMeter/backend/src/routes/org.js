@@ -21,6 +21,13 @@ router.get('/dashboard', auth, orgController.getDashboardStats);
 router.post('/calculate', auth, orgController.calculateEmissions);
 
 /**
+ * @route   POST /api/org/save-calculation
+ * @desc    Save comprehensive emission calculation
+ * @access  Private
+ */
+router.post('/save-calculation', auth, orgController.saveCalculation);
+
+/**
  * @route   POST /api/org/activities
  * @desc    Log a new emission activity
  * @access  Private
@@ -91,5 +98,40 @@ router.get('/compare/peers', auth, orgController.getPeerComparison);
 router.get('/compare/benchmarks', auth, orgController.getSectorBenchmarks);
 router.get('/compare/percentile', auth, orgController.getSectorPercentile);
 router.get('/compare/best-practices', auth, orgController.getBestPractices);
+
+/**
+ * @route   POST /api/org/prediction
+ * @desc    Get ML-based emission prediction for organization
+ * @access  Private
+ */
+router.post('/prediction', auth, orgController.getOrganizationPrediction);
+
+/**
+ * @route   GET /api/org/benchmarks
+ * @desc    Get sector benchmarks and industry standards
+ * @access  Private
+ */
+router.get('/benchmarks', auth, orgController.getBenchmarks);
+
+/**
+ * @route   GET /api/org/peers
+ * @desc    Get peer organization comparison
+ * @access  Private
+ */
+router.get('/peers', auth, orgController.getPeers);
+
+/**
+ * @route   GET /api/org/missing-data
+ * @desc    Check for missing emission data days
+ * @access  Private
+ */
+router.get('/missing-data', auth, orgController.checkMissingData);
+
+/**
+ * @route   POST /api/org/fill-missing
+ * @desc    Fill missing emission data with ML predictions
+ * @access  Private
+ */
+router.post('/fill-missing', auth, orgController.fillMissingData);
 
 module.exports = router;

@@ -1,0 +1,15 @@
+industry,month,machine,electricity_kwh,diesel_liter,gas_m3,coal_kg,co2_kg,type,date_logged
+ABC Manufacturing Ltd,2026-01,Boiler-1,12000,0,800,0,11360.0,machine,2026-01-28
+ABC Manufacturing Ltd,2026-01,DG-Set,0,450,0,0,1039.5,machine,2026-01-28
+ABC Manufacturing Ltd,2026-01,Furnace,8000,0,600,300,8426.0,machine,2026-01-28
+ABC Manufacturing Ltd,2026-01,PROCESS_EMISSIONS,,,,,231250.0,process,2026-01-28
+ABC Manufacturing Ltd,2026-01,TOTAL_MONTHLY_CO2,,,,,252075.5,total,2026-01-28
+tata,2025-12,drilling,3567.0,9008.0,3452.0,2345.0,35967.12,machine,0,2026-01-28
+tata,2025-12,crusing,8987.0,753.0,9512.0,7854.0,46188.25,machine,0,2026-01-28
+tata,2025-12,chimney,7844.0,7845.0,2135.0,9878.0,52515.29,machine,0,2026-01-28
+tata,2025-12,PROCESS_EMISSIONS,,,,,14619937.5,process,0,2026-01-28
+tata,2025-12,TOTAL_MONTHLY_CO2,,,,,14754608.16,total,0,2026-01-28
+Jio,2025-11,cruser,4574.0,3423.0,2367.0,123.0,16452.77,machine,0,2026-01-28
+Jio,2025-11,784,7856.0,784.0,5416.0,7845.0,37528.26,machine,0,2026-01-28
+Jio,2025-11,PROCESS_EMISSIONS,,,,,1026590.0,process,0,2026-01-28
+Jio,2025-11,TOTAL_MONTHLY_CO2,,,,,1080571.03,total,0,2026-01-28

@@ -28,6 +28,53 @@
   transition: color var(--transition-normal);
 }
 
+.logo-wrapper {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-logo-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
+  z-index: 2;
+  position: relative;
+}
+
+.energy-ring {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 210, 31, 0.2) 40deg,
+    #FFD21F 90deg,
+    rgba(255, 210, 31, 0.4) 140deg,
+    transparent 200deg
+  );
+  filter: blur(1.5px);
+  box-shadow:
+    0 0 8px rgba(255, 210, 31, 0.6),
+    0 0 16px rgba(255, 210, 31, 0.4);
+  animation: rotateRay 7s linear infinite;
+}
+
+@keyframes rotateRay {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .navbar-logo:hover {
   color: var(--accent-yellow);
 }

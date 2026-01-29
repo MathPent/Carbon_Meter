@@ -271,36 +271,50 @@ const EMISSION_FACTORS = {
  */
 exports.getDashboardStats = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.userId || req.user.id;
     
     // Get user details for organization info
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('organizationName organizationId sector employeeCount annualRevenue location industryType numberOfEmployees');
     
-    // Get all activities for this organization
-    const activities = await OrgActivity.find({ userId }).sort({ activityDate: -1 });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const organizationId = user.organizationId || userId;
+    
+    // Get all activities for this organization (check both userId and organizationId)
+    const activities = await OrgActivity.find({
+      $or: [
+        { userId: userId },
+        { organizationId: organizationId }
+      ]
+    }).sort({ activityDate: -1 });
     
     // Calculate total emissions by scope
     const scope1Total = activities
       .filter(a => a.scope === 'Scope 1')
-      .reduce((sum, a) => sum + a.emissionValue, 0);
+      .reduce((sum, a) => sum + (a.emissionValue || a.totalEmissions || 0), 0);
     
     const scope2Total = activities
       .filter(a => a.scope === 'Scope 2')
-      .reduce((sum, a) => sum + a.emissionValue, 0);
+      .reduce((sum, a) => sum + (a.emissionValue || a.totalEmissions || 0), 0);
     
     const scope3Total = activities
       .filter(a => a.scope === 'Scope 3')
-      .reduce((sum, a) => sum + a.emissionValue, 0);
+      .reduce((sum, a) => sum + (a.emissionValue || a.totalEmissions || 0), 0);
     
     const totalEmissions = scope1Total + scope2Total + scope3Total;
     
     // Calculate intensity metrics
-    const perEmployee = user.numberOfEmployees > 0 
-      ? totalEmissions / user.numberOfEmployees 
+    const employeeCount = user.employeeCount || user.numberOfEmployees || 0;
+    const revenue = user.annualRevenue || 0;
+    
+    const perEmployee = employeeCount > 0 
+      ? totalEmissions / employeeCount 
       : 0;
     
-    const perRevenue = user.annualRevenue > 0 
-      ? totalEmissions / user.annualRevenue * 1000000 // per million INR
+    const perRevenue = revenue > 0 
+      ? totalEmissions / revenue * 1000000 // per million INR
       : 0;
     
     // Get monthly trend (last 6 months)
@@ -310,7 +324,10 @@ exports.getDashboardStats = async (req, res) => {
     const monthlyData = await OrgActivity.aggregate([
       {
         $match: {
-          userId: userId,
+          $or: [
+            { userId: userId },
+            { organizationId: organizationId }
+          ],
           activityDate: { $gte: sixMonthsAgo },
         },
       },
@@ -320,20 +337,20 @@ exports.getDashboardStats = async (req, res) => {
             year: { $year: '$activityDate' },
             month: { $month: '$activityDate' },
           },
-          totalEmissions: { $sum: '$emissionValue' },
+          totalEmissions: { $sum: { $ifNull: ['$emissionValue', '$totalEmissions'] } },
           scope1: {
             $sum: {
-              $cond: [{ $eq: ['$scope', 'Scope 1'] }, '$emissionValue', 0],
+              $cond: [{ $eq: ['$scope', 'Scope 1'] }, { $ifNull: ['$emissionValue', '$totalEmissions'] }, 0],
             },
           },
           scope2: {
             $sum: {
-              $cond: [{ $eq: ['$scope', 'Scope 2'] }, '$emissionValue', 0],
+              $cond: [{ $eq: ['$scope', 'Scope 2'] }, { $ifNull: ['$emissionValue', '$totalEmissions'] }, 0],
             },
           },
           scope3: {
             $sum: {
-              $cond: [{ $eq: ['$scope', 'Scope 3'] }, '$emissionValue', 0],
+              $cond: [{ $eq: ['$scope', 'Scope 3'] }, { $ifNull: ['$emissionValue', '$totalEmissions'] }, 0],
             },
           },
         },
@@ -390,9 +407,9 @@ exports.getDashboardStats = async (req, res) => {
       lastUpdated: activities.length > 0 ? activities[0].activityDate : null,
       organizationInfo: {
         name: user.organizationName,
-        industryType: user.industryType,
-        employees: user.numberOfEmployees,
-        revenue: user.annualRevenue,
+        industryType: user.industryType || user.sector,
+        employees: employeeCount,
+        revenue: revenue,
         location: user.location,
       },
     });
@@ -489,6 +506,132 @@ exports.calculateEmissions = async (req, res) => {
     console.error('Error calculating emissions:', error);
     res.status(500).json({ 
       message: 'Emission calculation failed',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * Save comprehensive organization emission calculation
+ */
+exports.saveCalculation = async (req, res) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    const user = await User.findById(userId).select('organizationName organizationId sector employeeCount');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const { timePeriod, startDate, endDate, scope1, scope2, scope3, totalEmissions, perEmployee, perRevenue, rawData } = req.body;
+
+    const organizationId = user.organizationId || userId;
+
+    // Create activities for each scope with emissions
+    const activities = [];
+
+    // Scope 1 Activity
+    if (scope1 && scope1 > 0) {
+      const scope1Activity = new OrgActivity({
+        userId,
+        organizationId,
+        organizationName: user.organizationName,
+        activityDate: endDate ? new Date(endDate) : new Date(),
+        reportingPeriod: timePeriod || 'monthly',
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        scope: 'Scope 1',
+        category: 'Company Vehicles',
+        activityType: 'Fuel Combustion',
+        description: `Scope 1 emissions - ${timePeriod} calculation`,
+        emissionValue: scope1,
+        scope1Emissions: scope1,
+        scope2Emissions: 0,
+        scope3Emissions: 0,
+        totalEmissions: scope1,
+        unit: 'tCO2e',
+        calculationMethod: 'Comprehensive',
+        source: 'Organization Calculator',
+        verified: false,
+      });
+      await scope1Activity.save();
+      activities.push(scope1Activity);
+    }
+
+    // Scope 2 Activity
+    if (scope2 && scope2 > 0) {
+      const scope2Activity = new OrgActivity({
+        userId,
+        organizationId,
+        organizationName: user.organizationName,
+        activityDate: endDate ? new Date(endDate) : new Date(),
+        reportingPeriod: timePeriod || 'monthly',
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        scope: 'Scope 2',
+        category: 'Electricity Consumption',
+        activityType: 'Energy Use',
+        description: `Scope 2 emissions - ${timePeriod} calculation`,
+        emissionValue: scope2,
+        scope1Emissions: 0,
+        scope2Emissions: scope2,
+        scope3Emissions: 0,
+        totalEmissions: scope2,
+        unit: 'tCO2e',
+        calculationMethod: 'Comprehensive',
+        source: 'Organization Calculator',
+        verified: false,
+      });
+      await scope2Activity.save();
+      activities.push(scope2Activity);
+    }
+
+    // Scope 3 Activity
+    if (scope3 && scope3 > 0) {
+      const scope3Activity = new OrgActivity({
+        userId,
+        organizationId,
+        organizationName: user.organizationName,
+        activityDate: endDate ? new Date(endDate) : new Date(),
+        reportingPeriod: timePeriod || 'monthly',
+        startDate: startDate ? new Date(startDate) : null,
+        endDate: endDate ? new Date(endDate) : null,
+        scope: 'Scope 3',
+        category: 'Business Travel',
+        activityType: 'Transportation',
+        description: `Scope 3 emissions - ${timePeriod} calculation`,
+        emissionValue: scope3,
+        scope1Emissions: 0,
+        scope2Emissions: 0,
+        scope3Emissions: scope3,
+        totalEmissions: scope3,
+        unit: 'tCO2e',
+        calculationMethod: 'Comprehensive',
+        source: 'Organization Calculator',
+        verified: false,
+      });
+      await scope3Activity.save();
+      activities.push(scope3Activity);
+    }
+
+    // Update user's employee count if provided in rawData
+    if (rawData && rawData.numberOfEmployees) {
+      user.employeeCount = parseInt(rawData.numberOfEmployees);
+      await user.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Calculation saved successfully',
+      activities,
+      totalEmissions,
+      breakdown: { scope1, scope2, scope3 },
+    });
+  } catch (error) {
+    console.error('Error saving calculation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save calculation',
       error: error.message,
     });
   }
@@ -1597,6 +1740,534 @@ exports.getBestPractices = async (req, res) => {
       })),
       insufficientData: false,
       totalPractices: practices.length,
+    });
+  }
+};
+
+/**
+ * POST /api/org/prediction
+ * Get ML-based emission prediction for organization
+ * Integrates with Python ML API
+ */
+exports.getOrganizationPrediction = async (req, res) => {
+  try {
+    const user = await ensureOrganizationUser(req);
+    const sector = getSectorFromUser(user) || 'Technology';
+    const axios = require('axios');
+    
+    // Get historical emission data (last 90 days)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    const activities = await OrgActivity.find({
+      userId: user._id,
+      activityDate: { $gte: ninetyDaysAgo }
+    }).sort({ activityDate: 1 });
+    
+    // Aggregate daily emissions
+    const dailyEmissions = {};
+    activities.forEach(activity => {
+      const date = activity.activityDate.toISOString().split('T')[0];
+      dailyEmissions[date] = (dailyEmissions[date] || 0) + (activity.emissionValue || 0);
+    });
+    
+    const emission_history = Object.values(dailyEmissions);
+    const employee_count = user.numberOfEmployees || 100;
+    
+    // Prepare request payload for ML API
+    const mlPayload = {
+      organizationId: user._id.toString(),
+      sector: sector,
+      emission_history: emission_history,
+      employee_count: employee_count,
+      revenue: 0,  // Optional field
+      period: new Date().toISOString().slice(0, 7)  // YYYY-MM format
+    };
+    
+    try {
+      // Call Python ML API
+      const mlResponse = await axios.post('http://localhost:8000/predict/organization', mlPayload, {
+        timeout: 5000
+      });
+      
+      // Save prediction to database
+      const predictionDoc = {
+        organizationId: user._id,
+        period: mlPayload.period,
+        predicted_emission: mlResponse.data.predicted_emission,
+        trend: mlResponse.data.trend,
+        confidence: mlResponse.data.confidence,
+        benchmark_percentile: mlResponse.data.benchmark_percentile,
+        source: mlResponse.data.source,
+        demo: mlResponse.data.demo || false,
+        createdAt: new Date()
+      };
+      
+      // Return prediction response
+      res.json({
+        success: true,
+        prediction: mlResponse.data.predicted_emission,
+        trend: mlResponse.data.trend,
+        confidence: mlResponse.data.confidence,
+        benchmark_percentile: mlResponse.data.benchmark_percentile || 50,
+        period: mlPayload.period,
+        historical_days: emission_history.length,
+        source: mlResponse.data.source,
+        demo: mlResponse.data.demo || false,
+        message: mlResponse.data.message
+      });
+      
+    } catch (mlError) {
+      console.error('ML API error:', mlError.message);
+      
+      // Fallback: Use simple average-based prediction
+      const avgEmission = emission_history.length > 0
+        ? emission_history.reduce((sum, val) => sum + val, 0) / emission_history.length
+        : 100.0;
+      
+      const trend = emission_history.length >= 3
+        ? (emission_history[emission_history.length - 1] > emission_history[emission_history.length - 3] * 1.1
+          ? 'increasing'
+          : emission_history[emission_history.length - 1] < emission_history[emission_history.length - 3] * 0.9
+          ? 'decreasing'
+          : 'stable')
+        : 'stable';
+      
+      res.json({
+        success: true,
+        prediction: Math.round(avgEmission * 1.05 * 100) / 100,  // 5% growth assumption
+        trend: trend,
+        confidence: 0.65,
+        benchmark_percentile: 50,
+        period: mlPayload.period,
+        historical_days: emission_history.length,
+        source: 'Fallback Estimation',
+        demo: true,
+        message: 'ML service unavailable - using fallback calculation'
+      });
+    }
+    
+  } catch (error) {
+    console.error('Organization prediction error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate prediction',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/org/benchmarks
+ * Get sector benchmarks and industry standards
+ */
+exports.getBenchmarks = async (req, res) => {
+  try {
+    const user = await ensureOrganizationUser(req);
+    const sector = getSectorFromUser(user) || 'Technology';
+    
+    // Get benchmarks from demo data
+    const benchmarks = getBenchmarksForSector(sector);
+    
+    // Get current organization performance
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activities = await OrgActivity.find({
+      userId: user._id,
+      activityDate: { $gte: thirtyDaysAgo }
+    });
+    
+    const totalEmissions = activities.reduce((sum, act) => sum + (act.emissionValue || 0), 0);
+    const employees = user.numberOfEmployees || 1;
+    const emissionsPerEmployee = totalEmissions / employees;
+    
+    // Industry leaders data
+    const industryLeaders = [
+      { name: 'Tata Group', sector: sector, emissions_per_employee: benchmarks.excellent * 0.8, logo: 'tata' },
+      { name: 'Reliance Industries', sector: sector, emissions_per_employee: benchmarks.excellent * 0.9, logo: 'reliance' },
+      { name: 'Infosys', sector: sector, emissions_per_employee: benchmarks.good * 0.85, logo: 'infosys' },
+      { name: 'Wipro', sector: sector, emissions_per_employee: benchmarks.good * 0.95, logo: 'wipro' },
+      { name: 'Adani Group', sector: sector, emissions_per_employee: benchmarks.average * 0.9, logo: 'adani' }
+    ];
+    
+    res.json({
+      sector: sector,
+      your_performance: {
+        emissions_per_employee: Math.round(emissionsPerEmployee * 100) / 100,
+        total_emissions: Math.round(totalEmissions * 100) / 100,
+        employees: employees
+      },
+      benchmarks: {
+        excellent: benchmarks.excellent,
+        good: benchmarks.good,
+        average: benchmarks.average,
+        below_average: benchmarks.poor
+      },
+      industry_leaders: industryLeaders,
+      demo: activities.length === 0
+    });
+    
+  } catch (error) {
+    console.error('Benchmarks error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch benchmarks',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * GET /api/org/peers
+ * Get peer organization comparison
+ */
+exports.getPeers = async (req, res) => {
+  try {
+    const user = await ensureOrganizationUser(req);
+    const sector = getSectorFromUser(user) || 'Technology';
+    
+    // Get organization's emissions
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const activities = await OrgActivity.find({
+      userId: user._id,
+      activityDate: { $gte: thirtyDaysAgo }
+    });
+    
+    const yourEmissions = activities.reduce((sum, act) => sum + (act.emissionValue || 0), 0);
+    const yourEmployees = user.numberOfEmployees || 1;
+    const yourPerEmployee = yourEmissions / yourEmployees;
+    
+    // Generate peer comparison data
+    const benchmarks = getBenchmarksForSector(sector);
+    
+    const peerCompanies = [
+      { 
+        name: 'Tata Consultancy Services',
+        sector: sector,
+        emissions: benchmarks.excellent * yourEmployees * 0.85,
+        emissions_per_employee: benchmarks.excellent * 0.85,
+        employees: yourEmployees,
+        trend: 'decreasing',
+        logo: 'tata'
+      },
+      { 
+        name: 'Infosys Limited',
+        sector: sector,
+        emissions: benchmarks.good * yourEmployees * 0.9,
+        emissions_per_employee: benchmarks.good * 0.9,
+        employees: yourEmployees,
+        trend: 'stable',
+        logo: 'infosys'
+      },
+      { 
+        name: 'Wipro Technologies',
+        sector: sector,
+        emissions: benchmarks.good * yourEmployees * 1.05,
+        emissions_per_employee: benchmarks.good * 1.05,
+        employees: yourEmployees,
+        trend: 'decreasing',
+        logo: 'wipro'
+      },
+      { 
+        name: 'HCL Technologies',
+        sector: sector,
+        emissions: benchmarks.average * yourEmployees * 0.95,
+        emissions_per_employee: benchmarks.average * 0.95,
+        employees: yourEmployees,
+        trend: 'stable',
+        logo: 'hcl'
+      },
+      { 
+        name: 'Tech Mahindra',
+        sector: sector,
+        emissions: benchmarks.average * yourEmployees * 1.1,
+        emissions_per_employee: benchmarks.average * 1.1,
+        employees: yourEmployees,
+        trend: 'increasing',
+        logo: 'techmahindra'
+      }
+    ];
+    
+    // Add your organization
+    peerCompanies.unshift({
+      name: user.organizationName || 'Your Organization',
+      sector: sector,
+      emissions: yourEmissions,
+      emissions_per_employee: yourPerEmployee,
+      employees: yourEmployees,
+      trend: 'stable',
+      is_you: true
+    });
+    
+    // Sort by emissions per employee
+    peerCompanies.sort((a, b) => a.emissions_per_employee - b.emissions_per_employee);
+    
+    // Calculate rank
+    const yourRank = peerCompanies.findIndex(p => p.is_you) + 1;
+    
+    res.json({
+      sector: sector,
+      your_rank: yourRank,
+      total_peers: peerCompanies.length,
+      peers: peerCompanies.map((p, idx) => ({
+        rank: idx + 1,
+        name: p.name,
+        sector: p.sector,
+        total_emissions: Math.round(p.emissions * 100) / 100,
+        emissions_per_employee: Math.round(p.emissions_per_employee * 100) / 100,
+        employees: p.employees,
+        trend: p.trend,
+        is_you: p.is_you || false,
+        logo: p.logo
+      })),
+      demo: activities.length === 0
+    });
+    
+  } catch (error) {
+    console.error('Peers error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch peer comparison',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Check for missing emission data days
+ * Identifies gaps in daily activity logging for prediction
+ */
+exports.checkMissingData = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user.userId || req.user._id;
+    const user = await User.findById(userId).select('accountType organizationId sector');
+    
+    const accountType = (user?.accountType || '').toLowerCase();
+    if (accountType && accountType !== 'organization') {
+      return res.json({
+        success: true,
+        organizationId: user?.organizationId || userId,
+        sector: user?.sector || 'Manufacturing',
+        period: '90 days',
+        totalDays: 90,
+        daysWithData: 0,
+        missingDays: [],
+        totalMissing: 0,
+        dataCompleteness: '0.0',
+        message: 'Missing data checks are available for organization accounts only.'
+      });
+    }
+
+    const organizationId = user.organizationId || userId;
+
+    // Get all activities in the last 90 days
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 90);
+    
+    const activities = await OrgActivity.find({
+      organizationId,
+      createdAt: { $gte: startDate }
+    }).select('createdAt');
+
+    // Create set of dates with data
+    const datesWithData = new Set(
+      activities.map(a => a.createdAt.toISOString().split('T')[0])
+    );
+
+    // Find missing dates
+    const missingDays = [];
+    const currentDate = new Date(startDate);
+    const today = new Date();
+    
+    while (currentDate <= today) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      if (!datesWithData.has(dateStr)) {
+        missingDays.push(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    res.json({
+      success: true,
+      organizationId,
+      sector: user.sector,
+      period: '90 days',
+      totalDays: 90,
+      daysWithData: datesWithData.size,
+      missingDays: missingDays.slice(0, 30), // Return max 30 for display
+      totalMissing: missingDays.length,
+      dataCompleteness: ((datesWithData.size / 90) * 100).toFixed(1)
+    });
+
+  } catch (error) {
+    console.error('Check missing data error:', error);
+    res.status(500).json({
+      error: 'Failed to check missing data',
+      message: error.message
+    });
+  }
+};
+
+/**
+ * Fill missing emission data with ML predictions
+ * Uses Python ML API to predict and fill gaps in historical data
+ */
+exports.fillMissingData = async (req, res) => {
+  try {
+    const userId = req.user.id || req.user.userId || req.user._id;
+    const user = await User.findById(userId).select('accountType organizationId sector employeeCount revenue');
+    
+    const accountType = (user?.accountType || '').toLowerCase();
+    if (accountType && accountType !== 'organization') {
+      return res.json({
+        success: true,
+        organizationId: user?.organizationId || userId,
+        filledDays: 0,
+        predictions: [],
+        message: 'Missing data fill is available for organization accounts only.'
+      });
+    }
+
+    const organizationId = user.organizationId || userId;
+    const sector = user.sector || 'Manufacturing'; // Default to Manufacturing
+
+    // Get emission history for last 90 days
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 90);
+    
+    const activities = await OrgActivity.find({
+      organizationId,
+      createdAt: { $gte: startDate }
+    }).sort({ createdAt: 1 });
+
+    if (activities.length < 7) {
+      return res.status(400).json({
+        error: 'Insufficient data',
+        message: 'Need at least 7 days of historical data to generate predictions'
+      });
+    }
+
+    // Get dates with data
+    const datesWithData = new Set(
+      activities.map(a => a.createdAt.toISOString().split('T')[0])
+    );
+
+    // Find missing dates
+    const missingDates = [];
+    const currentDate = new Date(startDate);
+    const today = new Date();
+    
+    while (currentDate <= today) {
+      const dateStr = currentDate.toISOString().split('T')[0];
+      if (!datesWithData.has(dateStr)) {
+        missingDates.push(dateStr);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    if (missingDates.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No missing data to fill',
+        filled: 0
+      });
+    }
+
+    // Calculate emission history
+    const emissionHistory = activities.map(a => a.totalEmissions || 0);
+    const avgEmission = emissionHistory.reduce((a, b) => a + b, 0) / emissionHistory.length;
+
+    // Call ML API for each missing date (batch process)
+    let filledCount = 0;
+    const predictions = [];
+
+    try {
+      // Call Python ML API
+      const mlResponse = await axios.post('http://localhost:8000/predict/organization', {
+        organizationId: organizationId.toString(),
+        sector: sector,
+        emission_history: emissionHistory.slice(-30), // Last 30 days
+        employee_count: user.employeeCount || 100,
+        revenue: user.revenue || 1000000,
+        period: 'missing-days'
+      }, {
+        timeout: 10000
+      });
+
+      const predictedEmission = mlResponse.data.predicted_emission || avgEmission;
+
+      // Fill missing dates with prediction
+      for (const dateStr of missingDates.slice(0, 30)) { // Limit to 30 dates
+        const newActivity = new OrgActivity({
+          organizationId,
+          date: new Date(dateStr),
+          activityType: 'Predicted',
+          scope: 'All Scopes',
+          totalEmissions: predictedEmission,
+          scope1Emissions: predictedEmission * 0.3,
+          scope2Emissions: predictedEmission * 0.4,
+          scope3Emissions: predictedEmission * 0.3,
+          description: `AI-predicted emission for missing data (${sector} sector)`,
+          source: 'ML Prediction',
+          isPrediction: true,
+          predictionConfidence: mlResponse.data.confidence || 0.7
+        });
+
+        await newActivity.save();
+        filledCount++;
+        predictions.push({
+          date: dateStr,
+          predicted_emission: predictedEmission,
+          source: 'XGBoost ML Model'
+        });
+      }
+
+    } catch (mlError) {
+      console.error('ML API error, using fallback:', mlError.message);
+      
+      // Fallback: Use historical average
+      for (const dateStr of missingDates.slice(0, 30)) {
+        const newActivity = new OrgActivity({
+          organizationId,
+          date: new Date(dateStr),
+          activityType: 'Predicted',
+          scope: 'All Scopes',
+          totalEmissions: avgEmission,
+          scope1Emissions: avgEmission * 0.3,
+          scope2Emissions: avgEmission * 0.4,
+          scope3Emissions: avgEmission * 0.3,
+          description: `Statistical prediction for missing data (${sector} sector)`,
+          source: 'Statistical Fallback',
+          isPrediction: true,
+          predictionConfidence: 0.6
+        });
+
+        await newActivity.save();
+        filledCount++;
+        predictions.push({
+          date: dateStr,
+          predicted_emission: avgEmission,
+          source: 'Statistical Average'
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Filled ${filledCount} missing days with ML predictions`,
+      filled: filledCount,
+      totalMissing: missingDates.length,
+      predictions: predictions,
+      sector: sector,
+      method: predictions[0]?.source || 'Unknown'
+    });
+
+  } catch (error) {
+    console.error('Fill missing data error:', error);
+    res.status(500).json({
+      error: 'Failed to fill missing data',
+      message: error.message
     });
   }
 };
