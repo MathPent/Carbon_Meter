@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: carbonmeter-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ML_INDIVIDUAL_URL
+        value: https://carbonmeter-ml-individual.onrender.com
+      - key: ML_ORG_URL
+        value: https://carbonmeter-ml-org.onrender.com
