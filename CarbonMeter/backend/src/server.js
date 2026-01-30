@@ -11,16 +11,14 @@ const app = express();
 app.use(
   cors({
     origin: [
-      'https://carbonmeter-mathpent.netlify.app/',   // Netlify frontend
-      'http://localhost:3000'     // Local dev
+      'https://carbonmeter-mathpent.netlify.app',   // Netlify frontend (production)
+      process.env.FRONTEND_URL || 'https://carbonmeter-mathpent.netlify.app'     // Configurable frontend URL
     ],
     credentials: true
   })
 );
 
-
 // Middleware
-app.use(cors());
 app.use(express.json());
 
 // Connect to Database and start server

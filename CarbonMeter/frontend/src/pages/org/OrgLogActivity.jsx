@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './OrgLogActivity.css';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const OrgLogActivity = () => {
   const [activities, setActivities] = useState([]);
@@ -20,7 +21,7 @@ const OrgLogActivity = () => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       
-      let url = 'http://localhost:5000/api/org/activities?';
+      let url = `${API_ENDPOINTS.ORG.ACTIVITIES}?`;
       if (filter.scope !== 'all') url += `scope=${encodeURIComponent(filter.scope)}&`;
       if (filter.category !== 'all') url += `category=${encodeURIComponent(filter.category)}&`;
       

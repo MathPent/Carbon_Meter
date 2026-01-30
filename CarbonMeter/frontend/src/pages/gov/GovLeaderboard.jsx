@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api.config';
 import GovNavbar from '../../components/gov/GovNavbar';
 import './GovLeaderboard.css';
 
@@ -19,7 +20,7 @@ const GovLeaderboard = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/gov/leaderboard?filter=${filter}&timeFrame=${timeFrame}`,
+        `${API_ENDPOINTS.GOV.BASE}/leaderboard?filter=${filter}&timeFrame=${timeFrame}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

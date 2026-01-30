@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import './CarBoxAIWidget.css';
+import API_BASE_URL from '../../config/api.config';
 
 /**
  * CarBox_AI - Global AI Chatbot Widget
@@ -52,7 +53,7 @@ const CarBoxAIWidget = () => {
     if (!isAuthenticated || !token) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/carbox/history', {
+      const response = await fetch(`${API_BASE_URL}/api/carbox/history`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -158,7 +159,7 @@ const CarBoxAIWidget = () => {
       }
 
       // Call backend API
-      const response = await fetch('http://localhost:5000/api/carbox/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/carbox/chat`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify({ message: userMessage })

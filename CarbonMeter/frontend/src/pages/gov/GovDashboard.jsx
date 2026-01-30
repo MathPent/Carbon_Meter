@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api.config';
 import {
   LineChart,
   Line,
@@ -43,7 +44,7 @@ const GovDashboard = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/gov/dashboard`,
+        API_ENDPOINTS.GOV.DASHBOARD,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

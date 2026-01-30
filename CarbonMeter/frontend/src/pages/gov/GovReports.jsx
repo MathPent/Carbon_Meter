@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api.config';
 import GovNavbar from '../../components/gov/GovNavbar';
 import './GovReports.css';
 
@@ -21,7 +22,7 @@ const GovReports = () => {
       setMessage('');
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/gov/reports/generate`,
+        `${API_ENDPOINTS.GOV.REPORTS}/generate`,
         {
           reportType,
           format,

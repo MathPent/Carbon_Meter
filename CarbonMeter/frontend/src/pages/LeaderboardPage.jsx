@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './LeaderboardPage.css';
+import API_BASE_URL from '../config/api.config';
 
 const LeaderboardPage = () => {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -30,7 +31,7 @@ const LeaderboardPage = () => {
       console.log('Fetching leaderboard with period:', period);
       console.log('Using token:', token.substring(0, 20) + '...');
       
-      const response = await axios.get(`http://localhost:5000/api/activities/leaderboard?period=${period}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/activities/leaderboard?period=${period}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

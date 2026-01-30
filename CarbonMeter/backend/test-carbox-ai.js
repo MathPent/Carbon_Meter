@@ -4,6 +4,9 @@
  * Test the backend API endpoint directly
  */
 
+// Backend API URL from environment or default to production for testing
+const API_BASE_URL = process.env.API_BASE_URL || 'https://carbon-meter-kixz.onrender.com';
+
 const testCarBoxAI = async () => {
   const testQueries = [
     "What is carbon footprint?",
@@ -13,13 +16,13 @@ const testCarBoxAI = async () => {
     "What's the weather today?" // Should be declined
   ];
 
-  console.log('🧪 Testing CarBox AI Backend API\n');
+  console.log(`🧪 Testing CarBox AI Backend API at ${API_BASE_URL}\n`);
 
   for (const query of testQueries) {
     console.log(`\n📝 Query: "${query}"`);
     
     try {
-      const response = await fetch('http://localhost:5000/api/carbox/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/carbox/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

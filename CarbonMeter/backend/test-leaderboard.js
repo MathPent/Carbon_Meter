@@ -1,5 +1,8 @@
 const axios = require('axios');
 
+// Backend API URL from environment or default to production for testing
+const API_BASE_URL = process.env.API_BASE_URL || 'https://carbon-meter-kixz.onrender.com';
+
 // You need to replace this with your actual token from browser localStorage
 const token = process.argv[2];
 
@@ -14,9 +17,9 @@ if (!token) {
 
 async function testLeaderboard() {
   try {
-    console.log('Testing leaderboard API...\n');
+    console.log(`Testing leaderboard API at ${API_BASE_URL}...\n`);
     
-    const response = await axios.get('http://localhost:5000/api/activities/leaderboard?period=monthly', {
+    const response = await axios.get(`${API_BASE_URL}/api/activities/leaderboard?period=monthly`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './OrgCarbonCredits.css';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const OrgCarbonCredits = () => {
   const [loading, setLoading] = useState(true);
@@ -50,7 +51,7 @@ const OrgCarbonCredits = () => {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       
       // Fetch carbon credits
-      const creditsResponse = await fetch('http://localhost:5000/api/org/carbon-credits', {
+      const creditsResponse = await fetch(API_ENDPOINTS.ORG.CARBON_CREDITS, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -63,7 +64,7 @@ const OrgCarbonCredits = () => {
       }
       
       // Fetch dashboard stats for emissions
-      const dashboardResponse = await fetch('http://localhost:5000/api/org/dashboard', {
+      const dashboardResponse = await fetch(API_ENDPOINTS.ORG.DASHBOARD, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -99,7 +100,7 @@ const OrgCarbonCredits = () => {
     
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/carbon-credits/earn', {
+      const response = await fetch(`${API_ENDPOINTS.ORG.CARBON_CREDITS}/earn`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -131,7 +132,7 @@ const OrgCarbonCredits = () => {
     
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/carbon-credits/purchase', {
+      const response = await fetch(`${API_ENDPOINTS.ORG.CARBON_CREDITS}/purchase`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -163,7 +164,7 @@ const OrgCarbonCredits = () => {
     
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/carbon-credits/use', {
+      const response = await fetch(`${API_ENDPOINTS.ORG.CARBON_CREDITS}/use`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

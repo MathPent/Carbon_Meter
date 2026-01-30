@@ -44,20 +44,30 @@
 
 ---
 
-## 📋 Remaining Tasks (TO DO)
+## ✅ Configuration Complete
 
-### **HIGH PRIORITY**
+### **Frontend URLs - REFACTORED**
 
-#### 1. **Update Frontend Hardcoded URLs**
-Replace all instances of `http://localhost:5000` with:
+All frontend hardcoded URLs have been removed and replaced with environment-based configuration:
+
 ```javascript
-import { API_ENDPOINTS } from '../config/api.config';
-// Use: API_ENDPOINTS.ORG.DASHBOARD instead of hardcoded URL
+// Centralized configuration in: frontend/src/config/api.config.js
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+// All API calls now use: API_ENDPOINTS.ORG.DASHBOARD, etc.
 ```
 
-**Files to Update (20+ matches found):**
-- `frontend/src/pages/org/OrgDashboard.jsx`
-- `frontend/src/pages/org/OrgCarbonCredits.jsx`
+**Environment Variable Required:**
+- Local: Create `frontend/.env` with `REACT_APP_API_URL=http://localhost:5000`
+- Production: Set in Netlify: `REACT_APP_API_URL=https://carbon-meter-kixz.onrender.com`
+
+**Files Updated (28 frontend files):**
+- All organization pages (OrgDashboard, OrgCompare, etc.)
+- All government pages (GovDashboard, GovReports, etc.)
+- All individual user pages (BadgesPage, LeaderboardPage, etc.)
+- All admin pages and components
+
+**For detailed refactoring summary, see:** `REFACTORING_SUMMARY.md`
 - `frontend/src/pages/org/OrgCompare.jsx`
 - `frontend/src/pages/org/OrgCalculate.jsx`
 - `frontend/src/pages/org/OrgLogActivity.jsx`

@@ -9,4 +9,4 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  REACT_APP_API_BASE_URL = "https://carbonmeter-backend.onrender.com"
+  REACT_APP_API_URL = "https://carbon-meter-kixz.onrender.com"

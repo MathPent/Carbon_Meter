@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './AnalyticsAndReports.css';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const AnalyticsAndReports = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
@@ -13,7 +14,7 @@ const AnalyticsAndReports = () => {
   const fetchAnalyticsData = async () => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/analytics', {
+      const response = await fetch(`${API_ENDPOINTS.ORG.BASE}/analytics`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -34,7 +35,7 @@ const AnalyticsAndReports = () => {
   const handleDownloadReport = async (reportType) => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/org/reports/${reportType}`, {
+      const response = await fetch(`${API_ENDPOINTS.ORG.BASE}/reports/${reportType}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -59,7 +60,7 @@ const AnalyticsAndReports = () => {
   const handleExportCSV = async (reportType) => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/org/reports/${reportType}/csv`, {
+      const response = await fetch(`${API_ENDPOINTS.ORG.BASE}/reports/${reportType}/csv`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

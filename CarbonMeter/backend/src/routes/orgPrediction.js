@@ -5,7 +5,7 @@ const auth = require('../middleware/auth');
 const OrgActivity = require('../models/OrgActivity');
 const OrganizationPrediction = require('../models/OrganizationPrediction');
 
-const ML_API_URL = 'http://localhost:8001';
+const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8001';
 
 /**
  * POST /api/org/predict

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
+import API_BASE_URL from '../config/api.config';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -38,7 +39,7 @@ const AdminDashboard = () => {
       setLoading(true);
       const adminToken = localStorage.getItem('adminToken');
       
-      const response = await fetch('http://localhost:5000/api/admin/dashboard/stats', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
@@ -69,7 +70,7 @@ const AdminDashboard = () => {
     try {
       const adminToken = localStorage.getItem('adminToken');
       
-      const response = await fetch('http://localhost:5000/api/admin/users?page=1&limit=100', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users?page=1&limit=100`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'
@@ -91,7 +92,7 @@ const AdminDashboard = () => {
     try {
       const adminToken = localStorage.getItem('adminToken');
       
-      const response = await fetch('http://localhost:5000/api/admin/emissions?timeframe=30', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/emissions?timeframe=30`, {
         headers: {
           'Authorization': `Bearer ${adminToken}`,
           'Content-Type': 'application/json'

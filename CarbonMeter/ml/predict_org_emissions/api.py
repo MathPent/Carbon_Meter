@@ -15,7 +15,18 @@ import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:3000", "http://localhost:5000"])
+# CORS configuration - allow requests from frontend and backend
+allowed_origins = [
+    "https://carbonmeter-mathpent.netlify.app",  # Production frontend
+    "https://carbon-meter-kixz.onrender.com",  # Production backend
+]
+# Add environment variable if set
+if os.environ.get('FRONTEND_URL'):
+    allowed_origins.append(os.environ.get('FRONTEND_URL'))
+if os.environ.get('BACKEND_URL'):
+    allowed_origins.append(os.environ.get('BACKEND_URL'))
+
+CORS(app, origins=allowed_origins)
 
 # Load XGBoost model
 MODEL_PATH = "industry_xgboost_final.pkl"

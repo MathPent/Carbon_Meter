@@ -57,7 +57,7 @@ async function createAdmin() {
     console.log('Password:', ADMIN_PASSWORD);
     console.log('───────────────────────────────');
     console.log('\n🔐 Please change the password after first login!');
-    console.log('🌐 Login at: http://localhost:3000/admin/login\n');
+    console.log('🌐 Login at: https://carbonmeter-mathpent.netlify.app/admin/login\n');
 
     process.exit(0);
 

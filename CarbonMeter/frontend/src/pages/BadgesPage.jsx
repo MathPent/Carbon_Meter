@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './BadgesPage.css';
+import API_BASE_URL from '../config/api.config';
 
 const BadgesPage = () => {
   const [badges, setBadges] = useState([]);
@@ -14,7 +15,7 @@ const BadgesPage = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5000/api/badges/available', {
+      const response = await axios.get(`${API_BASE_URL}/api/badges/available`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

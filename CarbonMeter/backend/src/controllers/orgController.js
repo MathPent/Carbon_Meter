@@ -1786,7 +1786,8 @@ exports.getOrganizationPrediction = async (req, res) => {
     
     try {
       // Call Python ML API
-      const mlResponse = await axios.post('http://localhost:8000/predict/organization', mlPayload, {
+      const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000';
+      const mlResponse = await axios.post(`${ML_API_URL}/predict/organization`, mlPayload, {
         timeout: 5000
       });
       
@@ -2184,7 +2185,8 @@ exports.fillMissingData = async (req, res) => {
 
     try {
       // Call Python ML API
-      const mlResponse = await axios.post('http://localhost:8000/predict/organization', {
+      const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000';
+      const mlResponse = await axios.post(`${ML_API_URL}/predict/organization`, {
         organizationId: organizationId.toString(),
         sector: sector,
         emission_history: emissionHistory.slice(-30), // Last 30 days

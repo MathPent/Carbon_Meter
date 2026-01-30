@@ -4,6 +4,11 @@
  */
 
 const http = require('http');
+const url = require('url');
+
+// Backend API URL from environment or default to production for testing
+const API_BASE_URL = process.env.API_BASE_URL || 'https://carbon-meter-kixz.onrender.com';
+const parsedUrl = new URL(API_BASE_URL);
 
 // Test data
 const email = '24mc3065@rigpt.ac.in'; // Use test email
@@ -16,8 +21,8 @@ const postData = JSON.stringify({
 });
 
 const options = {
-  hostname: 'localhost',
-  port: 5000,
+  hostname: parsedUrl.hostname,
+  port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
   path: '/api/auth/resend-otp',
   method: 'POST',
   headers: {
@@ -32,7 +37,7 @@ console.log('==========================================\n');
 
 console.log('📤 Request Details:');
 console.log('   Method: POST');
-console.log('   URL: http://localhost:5000/api/auth/resend-otp');
+console.log(`   URL: ${API_BASE_URL}/api/auth/resend-otp`);
 console.log('   Email:', email);
 console.log('   Purpose:', purpose);
 console.log('\n⏳ Waiting for response...\n');

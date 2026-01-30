@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './OrgCalculate.css';
 import api from '../../api';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const OrgCalculate = () => {
   const navigate = useNavigate();
@@ -195,7 +196,7 @@ const OrgCalculate = () => {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/save-calculation', {
+      const response = await fetch(API_ENDPOINTS.ORG.CALCULATE, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

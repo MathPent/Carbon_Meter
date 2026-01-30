@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api.config';
 import GovNavbar from '../../components/gov/GovNavbar';
 import './GovCarbonMap.css';
 
@@ -18,7 +19,7 @@ const GovCarbonMap = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/gov/carbon-map?filter=${filter}`,
+        `${API_ENDPOINTS.GOV.BASE}/carbon-map?filter=${filter}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

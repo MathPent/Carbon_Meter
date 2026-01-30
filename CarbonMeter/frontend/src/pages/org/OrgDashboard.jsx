@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import './OrgDashboard.css';
 import api from '../../api';
 import AnalyticsAndReports from '../../components/org/AnalyticsAndReports';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const OrgDashboard = () => {
   const [stats, setStats] = useState({
@@ -29,7 +30,7 @@ const OrgDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/dashboard', {
+      const response = await fetch(API_ENDPOINTS.ORG.DASHBOARD, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -52,7 +53,7 @@ const OrgDashboard = () => {
   const checkMissingData = async () => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/missing-data', {
+      const response = await fetch(API_ENDPOINTS.ORG.MISSING_DATA, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -77,7 +78,7 @@ const OrgDashboard = () => {
       const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
       const industry = userInfo.industry || 'Manufacturing';
       
-      const response = await fetch('http://localhost:5000/api/org/predict', {
+      const response = await fetch(API_ENDPOINTS.ORG.PREDICT, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,7 +125,7 @@ const OrgDashboard = () => {
       setPredicting(true);
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/org/save-prediction', {
+      const response = await fetch(API_ENDPOINTS.ORG.SAVE_PREDICTION, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -153,7 +154,7 @@ const OrgDashboard = () => {
     try {
       setPredicting(true);
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/org/fill-missing', {
+      const response = await fetch(API_ENDPOINTS.ORG.FILL_MISSING, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

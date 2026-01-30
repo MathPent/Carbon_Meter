@@ -1,5 +1,16 @@
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+// MUST set REACT_APP_API_URL environment variable
+// Production: REACT_APP_API_URL=https://carbon-meter-kixz.onrender.com
+// Local development: REACT_APP_API_URL=http://localhost:5000
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error(
+    'REACT_APP_API_URL environment variable is not set. ' +
+    'Please create a .env file with: REACT_APP_API_URL=https://carbon-meter-kixz.onrender.com (for production) ' +
+    'or set it in your deployment platform (e.g., Netlify)'
+  );
+}
 
 export const API_ENDPOINTS = {
   BASE: API_BASE_URL,

@@ -87,7 +87,7 @@ MongoDB Atlas connected
 
 #### ✅ Step 6: Test ML Status Check
 ```bash
-curl http://localhost:5000/api/org/ml-status
+curl ${BACKEND_URL:-https://carbon-meter-kixz.onrender.com}/api/org/ml-status
 ```
 
 **Expected Response:**
@@ -104,13 +104,16 @@ curl http://localhost:5000/api/org/ml-status
 
 #### ✅ Step 7: Test Prediction via Backend (Requires Auth)
 ```bash
+# Set backend URL (local or production)
+BACKEND_URL=${BACKEND_URL:-https://carbon-meter-kixz.onrender.com}
+
 # Get auth token first
-curl -X POST http://localhost:5000/api/auth/login ^
+curl -X POST $BACKEND_URL/api/auth/login ^
   -H "Content-Type: application/json" ^
   -d "{\"email\":\"org@test.com\",\"password\":\"test123\"}"
 
 # Use token in prediction request
-curl -X POST http://localhost:5000/api/org/predict ^
+curl -X POST $BACKEND_URL/api/org/predict ^
   -H "Content-Type: application/json" ^
   -H "Authorization: Bearer YOUR_TOKEN_HERE" ^
   -d "{\"period\":\"next_30_days\",\"industry\":\"Manufacturing\"}"

@@ -31,7 +31,7 @@ const authMiddleware = (req, res, next) => {
 };
 
 // ML API base URL
-const ML_API_URL = 'http://localhost:8000';
+const ML_API_URL = process.env.ML_API_URL || 'http://localhost:8000';
 
 // CSV paths
 const CSV_PATH = path.join(__dirname, '../../../ml/Carbon_meter/calculation_emission/carbonmeter_daily_log.csv');

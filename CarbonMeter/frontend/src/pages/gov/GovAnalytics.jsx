@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../context/AuthContext';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api.config';
 import {
   LineChart,
   Line,
@@ -42,7 +43,7 @@ const GovAnalytics = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/gov/analytics?days=${timeRange}`,
+        `${API_ENDPOINTS.GOV.ANALYTICS}?days=${timeRange}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

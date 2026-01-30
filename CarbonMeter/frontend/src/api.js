@@ -1,6 +1,7 @@
 import axios from 'axios';
+import API_BASE_URL from './config/api.config';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = `${API_BASE_URL}/api`;
 
 export const authAPI = {
   // ========== 3-STEP REGISTRATION FLOW ==========

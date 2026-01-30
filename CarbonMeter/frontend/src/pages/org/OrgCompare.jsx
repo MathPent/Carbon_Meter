@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './OrgCompare.css';
+import { API_ENDPOINTS } from '../../config/api.config';
 
 const OrgCompare = () => {
   const [loading, setLoading] = useState(true);
@@ -28,11 +29,11 @@ const OrgCompare = () => {
 
       // Fetch all endpoints in parallel (updated to /api/org/*)
       const [leaderboardRes, peersRes, benchmarksRes, percentileRes, practicesRes] = await Promise.all([
-        fetch('http://localhost:5000/api/organization/leaderboard', { headers }),
-        fetch('http://localhost:5000/api/org/peers', { headers }),
-        fetch('http://localhost:5000/api/org/benchmarks', { headers }),
-        fetch('http://localhost:5000/api/organization/compare/percentile', { headers }),
-        fetch('http://localhost:5000/api/organization/best-practices', { headers }),
+        fetch(API_ENDPOINTS.ORGANIZATION.LEADERBOARD, { headers }),
+        fetch(API_ENDPOINTS.ORG.PEERS, { headers }),
+        fetch(API_ENDPOINTS.ORG.BENCHMARKS, { headers }),
+        fetch(`${API_ENDPOINTS.ORGANIZATION.COMPARE}/percentile`, { headers }),
+        fetch(API_ENDPOINTS.ORGANIZATION.BEST_PRACTICES, { headers }),
       ]);
 
       const leaderboardData = await leaderboardRes.json();
@@ -61,7 +62,7 @@ const OrgCompare = () => {
 
   const fetchPrediction = async (headers) => {
     try {
-      const response = await fetch('http://localhost:5000/api/org/prediction', {
+      const response = await fetch(`${API_ENDPOINTS.ORG.BASE}/prediction`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

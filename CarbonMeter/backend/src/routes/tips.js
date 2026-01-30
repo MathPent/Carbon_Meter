@@ -61,10 +61,11 @@ router.get('/personalized', authMiddleware, async (req, res) => {
     // Build AI prompt
     const prompt = buildAIPrompt(emissionSummary, activities);
 
-    // Call Carbox AI
+    // Call Carbox AI - use internal call or construct URL
+    const API_BASE_URL = process.env.API_BASE_URL || process.env.BACKEND_URL || 'https://carbon-meter-kixz.onrender.com';
     let aiTips = [];
     try {
-      const carboxResponse = await axios.post('http://localhost:5000/api/carbox/generate-tips', {
+      const carboxResponse = await axios.post(`${API_BASE_URL}/api/carbox/generate-tips`, {
         prompt,
         emissionData: emissionSummary
       }, {
