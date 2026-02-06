@@ -6,12 +6,13 @@ const connectDB = require('./config/database');
 const app = express();
 
 /* =========================
-   CORS CONFIG (PRODUCTION)
+   CORS CONFIG (PRODUCTION & LOCAL)
 ========================= */
 app.use(
   cors({
     origin: [
       'https://carbonmeter-mathpent.netlify.app',   // Netlify frontend (production)
+      'http://localhost:3000',                       // Local development frontend
       process.env.FRONTEND_URL || 'https://carbonmeter-mathpent.netlify.app'     // Configurable frontend URL
     ],
     credentials: true
